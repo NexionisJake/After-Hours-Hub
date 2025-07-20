@@ -19,6 +19,41 @@ const firebaseConfig = {
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
+
+// Function to extract first name and update greeting
+function updateGreetingWithUser(user) {
+    // Get time-based greeting
+    const hour = new Date().getHours();
+    let timeGreeting = '';
+    if (hour < 12) timeGreeting = 'Good morning';
+    else if (hour < 17) timeGreeting = 'Good afternoon';
+    else timeGreeting = 'Good evening';
+    
+    let motivationalText = '';
+    if (hour < 12) motivationalText = 'Ready to start strong?';
+    else if (hour < 17) motivationalText = 'Keep the momentum going!';
+    else motivationalText = 'Ready to conquer the night?';
+    
+    // Extract first name from user display name
+    let firstName = 'Stud'; // Default fallback
+    if (user && user.displayName) {
+        // Split display name and get first part
+        const nameParts = user.displayName.trim().split(' ');
+        const firstPart = nameParts[0];
+        
+        // Keep "Stud" for demo users or generic names, otherwise use first name
+        if (firstPart && firstPart.toLowerCase() !== 'user' && firstPart.toLowerCase() !== 'student') {
+            firstName = firstPart;
+        }
+    }
+    
+    // Update greeting element if it exists
+    const greetingElement = document.querySelector('.greeting h2');
+    if (greetingElement) {
+        greetingElement.innerHTML = `${timeGreeting}, <span id="user-name">${firstName}</span>! ${motivationalText}`;
+    }
+}
+
 // Check if user is authenticated
 
 onAuthStateChanged(auth, (user) => {
@@ -33,16 +68,20 @@ onAuthStateChanged(auth, (user) => {
             if (user.photoURL) {
                 userProfilePic.src = user.photoURL;
             } else {
-                const userName = user.displayName || user.email || 'User';
+                const userName = user.displayName || user.email || 'Student';
                 userProfilePic.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(userName)}&size=150&background=random`;
             }
         }
+        
+        // Update greeting with user's first name
+        updateGreetingWithUser(user);
     } else {
         // No user is signed in. Redirect to login page.
         console.log("No user found, redirecting to login.");
         window.location.href = 'login.html';
     }
 });
+
 
 const handleSignOut = () => {
     signOut(auth).then(() => {
@@ -119,23 +158,7 @@ document.addEventListener('DOMContentLoaded', () => {
     updateClock();
     clockIntervalId = setInterval(updateClock, 1000);
 
-    // --- 2. DYNAMIC GREETING BASED ON TIME ---
-    const hour = new Date().getHours();
-    let timeGreeting = '';
-    if (hour < 12) timeGreeting = 'Good morning';
-    else if (hour < 17) timeGreeting = 'Good afternoon';
-    else timeGreeting = 'Good evening';
-    
-    let motivationalText = '';
-    if (hour < 12) motivationalText = 'Ready to start strong?';
-    else if (hour < 17) motivationalText = 'Keep the momentum going!';
-    else motivationalText = 'Ready to conquer the night?';
-
-    if (elements.greeting) {
-        elements.greeting.innerHTML = `${timeGreeting}, <span id="user-name">Stud</span>! ${motivationalText}`;
-    }
-
-    // --- 3. THEME TOGGLE FUNCTIONALITY ---
+    // --- 2. THEME TOGGLE FUNCTIONALITY ---
     const root = document.documentElement;
     elements.themeToggle.addEventListener('click', () => {
         isDarkMode = !isDarkMode;
@@ -156,7 +179,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // --- 4. SIDEBAR TOGGLE FOR MOBILE ---
+    // --- 3. SIDEBAR TOGGLE FOR MOBILE ---
     function handleResize() {
         if (window.innerWidth <= 1024) {
             elements.sidebarToggle.style.display = 'flex';
@@ -169,7 +192,7 @@ document.addEventListener('DOMContentLoaded', () => {
     window.addEventListener('resize', handleResize);
     handleResize(); // Initial check
 
-    // --- 5. ENHANCED CARD INTERACTIONS ---
+    // --- 4. ENHANCED CARD INTERACTIONS ---
     elements.featureCards.forEach(card => {
         card.addEventListener('click', (e) => {
             e.stopPropagation();
@@ -200,7 +223,7 @@ document.addEventListener('DOMContentLoaded', () => {
         elements.featureCards.forEach(card => card.classList.remove('expanded'));
     });
 
-    // --- 6. ENHANCED SEARCH FUNCTIONALITY ---
+    // --- 5. ENHANCED SEARCH FUNCTIONALITY ---
     function performSearch(query) {
         const normalizedQuery = query.toLowerCase().trim();
         let visibleCount = 0;
@@ -237,7 +260,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }, 300);
     });
 
-    // --- 7. NOTIFICATION SYSTEM (Enhanced with missing styles) ---
+    // --- 6. NOTIFICATION SYSTEM (Enhanced with missing styles) ---
     const notificationDropdown = document.createElement('div');
     notificationDropdown.className = 'notification-dropdown';
     notificationDropdown.innerHTML = `<div style="padding: 1rem; text-align: center; color: var(--text-secondary);">No new notifications.</div>`;
@@ -262,7 +285,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     document.addEventListener('click', closeDropdown);
 
-    // --- 8. PROFILE DROPDOWN FUNCTIONALITY ---
+    // --- 7. PROFILE DROPDOWN FUNCTIONALITY ---
     elements.profileDropdownBtn?.addEventListener('click', (e) => {
         e.stopPropagation();
         const isHidden = elements.profileDropdown?.classList.contains('hidden');
@@ -293,7 +316,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // --- 9. WIDGET ANIMATIONS ---
+    // --- 8. WIDGET ANIMATIONS ---
     // Progress Bar
     if (elements.progressFill) {
         setTimeout(() => { elements.progressFill.style.width = '50%'; }, 1000);
@@ -340,7 +363,7 @@ document.addEventListener('DOMContentLoaded', () => {
         observer.observe(el);
     });
     
-    // --- 10. ACCESSIBILITY & CLEANUP ---
+    // --- 9. ACCESSIBILITY & CLEANUP ---
     document.addEventListener('keydown', (e) => {
         if (e.key === 'Tab') document.body.classList.add('keyboard-navigation');
     });

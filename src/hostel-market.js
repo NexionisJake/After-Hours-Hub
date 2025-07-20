@@ -33,8 +33,8 @@ onAuthStateChanged(auth, (user) => {
 
 // === 1. CLOUDINARY UPLOAD WIDGET (IMAGE ONLY) ===
 const cloudinaryWidget = cloudinary.createUploadWidget({
-    cloudName: CLOUDINARY_CLOUD_NAME,
-    uploadPreset: CLOUDINARY_UPLOAD_PRESET,
+    cloudName: cloudinaryConfig.cloudName,
+    uploadPreset: cloudinaryConfig.uploadPreset,
     folder: 'market-items',
     sources: ['local', 'url', 'camera'],
     multiple: false,
@@ -86,6 +86,7 @@ newItemForm.addEventListener('submit', async (e) => {
         await addDoc(collection(db, "marketListings"), {
             name: newItemForm['item-name'].value.trim(),
             description: newItemForm['item-description'].value.trim(),
+            category: newItemForm['item-category'].value,
             imageUrl: uploadedFileUrl,
             price: parseFloat(newItemForm['item-price'].value),
             sellerName: currentUser.displayName,
@@ -107,69 +108,220 @@ newItemForm.addEventListener('submit', async (e) => {
     }
 });
 
-// === MARK AS SOLD FUNCTION ===
-window.markItemAsSold = async function(itemId) {
+// === SECURE: MARK AS SOLD FUNCTION (No Global Exposure) ===
+async function markItemAsSoldSecure(itemId) {
+    // Security Check: Only authenticated users can proceed
+    if (!currentUser) {
+        alert("You must be logged in to perform this action.");
+        return;
+    }
+    
+    if (!confirm("Are you sure you want to mark this item as sold?")) return;
+    
     try {
+        // The REAL security happens in Firebase Rules (see recommendation)
+        // This client-side check is just for UX - Firebase Rules are the real protection
         await updateDoc(doc(db, "marketListings", itemId), {
             isSold: true
         });
+        alert("Item marked as sold!");
     } catch (error) {
         console.error("Error marking item as sold:", error);
-        alert("Failed to mark item as sold. Please try again.");
+        // Don't expose internal error details to users
+        alert("Failed to update item. Please try again.");
     }
 }
 
-// === 3. READ: Fetch and display items from Firestore ===
+// === CATEGORY UTILITY FUNCTIONS ===
+function getCategoryIcon(category) {
+    const icons = {
+        'food': '🍕',
+        'daily-use': '🧴',
+        'appliance': '⚡',
+        'others': '📦'
+    };
+    return icons[category] || '📦';
+}
+
+function getCategoryName(category) {
+    const names = {
+        'food': 'Food & Snacks',
+        'daily-use': 'Daily Use',
+        'appliance': 'Appliances',
+        'others': 'Others'
+    };
+    return names[category] || 'Others';
+}
+
+// === FILTERING FUNCTIONALITY ===
+let currentFilter = 'all';
+let allItems = [];
+
+function filterItems(category) {
+    currentFilter = category;
+    
+    // Update active filter button
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+        btn.classList.remove('active');
+        if (btn.dataset.category === category) {
+            btn.classList.add('active');
+        }
+    });
+    
+    // Filter and display items
+    const filteredItems = category === 'all' ? allItems : allItems.filter(item => item.category === category);
+    displayItems(filteredItems);
+}
+
+function displayItems(items) {
+    marketContainer.innerHTML = '';
+    
+    if (items.length === 0) {
+        const emptyMessage = document.createElement('p');
+        emptyMessage.style.cssText = 'grid-column: 1 / -1; text-align: center; color: var(--text-secondary);';
+        emptyMessage.textContent = currentFilter === 'all' ? 'No items on the market yet.' : `No items found in the ${getCategoryName(currentFilter)} category.`;
+        marketContainer.appendChild(emptyMessage);
+        return;
+    }
+    
+    items.forEach(({ doc, item }) => {
+        const itemEl = createSecureItemCard(doc, item);
+        marketContainer.appendChild(itemEl);
+    });
+}
+
+// === SECURE ITEM CARD CREATION (XSS Safe) ===
+function createSecureItemCard(doc, item) {
+    const isAuthor = currentUser && currentUser.uid === item.sellerId;
+    const isSold = item.isSold || false;
+    const category = item.category || 'others';
+    
+    // Create main card element
+    const itemEl = document.createElement('article');
+    itemEl.className = `item-card category-${category}`;
+    
+    // Create category badge
+    const categoryBadge = document.createElement('div');
+    categoryBadge.className = 'category-badge';
+    categoryBadge.textContent = `${getCategoryIcon(category)} ${getCategoryName(category)}`;
+    
+    // Create sold badge if needed
+    if (isSold) {
+        const soldBadge = document.createElement('div');
+        soldBadge.className = 'sold-badge';
+        soldBadge.textContent = 'SOLD';
+        itemEl.appendChild(soldBadge);
+    }
+    
+    // Create image element
+    const itemImage = document.createElement('img');
+    const thumbnailUrl = item.imageUrl.replace('/upload/', '/upload/w_400,h_300,c_fill,q_auto/');
+    itemImage.src = thumbnailUrl;
+    itemImage.alt = item.name; // Safe: alt attribute
+    itemImage.className = 'item-image';
+    if (isSold) {
+        itemImage.style.cssText = 'opacity: 0.6; filter: grayscale(50%);';
+    }
+    
+    // Create content container
+    const itemContent = document.createElement('div');
+    itemContent.className = 'item-content';
+    
+    // Create title
+    const itemTitle = document.createElement('h3');
+    itemTitle.className = 'item-title';
+    itemTitle.textContent = item.name; // Safe: textContent prevents XSS
+    if (isSold) itemTitle.style.opacity = '0.7';
+    
+    // Create price
+    const itemPrice = document.createElement('p');
+    itemPrice.className = 'item-price';
+    itemPrice.textContent = `₹${item.price.toLocaleString()}`;
+    if (isSold) itemPrice.style.cssText = 'text-decoration: line-through; opacity: 0.7;';
+    
+    // Create description
+    const itemDesc = document.createElement('p');
+    itemDesc.textContent = item.description; // Safe: textContent prevents XSS
+    if (isSold) itemDesc.style.opacity = '0.7';
+    
+    // Create seller info container
+    const itemSeller = document.createElement('div');
+    itemSeller.className = 'item-seller';
+    
+    const sellerImg = document.createElement('img');
+    sellerImg.src = item.sellerPhotoURL;
+    sellerImg.alt = item.sellerName; // Safe: alt attribute
+    
+    const sellerName = document.createElement('span');
+    sellerName.textContent = item.sellerName; // Safe: textContent prevents XSS
+    
+    itemSeller.appendChild(sellerImg);
+    itemSeller.appendChild(sellerName);
+    
+    // Create action button with secure event listener
+    const actionButton = document.createElement('button');
+    if (isAuthor && !isSold) {
+        actionButton.className = 'btn-mark-sold';
+        actionButton.textContent = 'Mark as Sold';
+        actionButton.addEventListener('click', () => {
+            // Secure: No global function exposure
+            markItemAsSoldSecure(doc.id);
+        });
+    } else if (!isSold) {
+        actionButton.className = 'btn-contact';
+        actionButton.textContent = 'Contact Seller';
+    } else {
+        actionButton.className = 'btn-sold';
+        actionButton.textContent = 'SOLD';
+        actionButton.disabled = true;
+    }
+    
+    // Assemble the elements
+    itemEl.appendChild(categoryBadge);
+    itemEl.appendChild(itemImage);
+    itemContent.appendChild(itemTitle);
+    itemContent.appendChild(itemPrice);
+    itemContent.appendChild(itemDesc);
+    itemContent.appendChild(itemSeller);
+    itemContent.appendChild(actionButton);
+    itemEl.appendChild(itemContent);
+    
+    return itemEl;
+}
+
+// === DEPRECATED: Remove Global Function Exposure ===
+// This was a security vulnerability - commented out for reference
+// window.markItemAsSold = async function(itemId) { ... }
+
+// === 3. SECURE: Fetch and display items from Firestore ===
 const q = query(collection(db, "marketListings"), orderBy("createdAt", "desc"));
 marketLoading.style.display = 'block';
 
 onSnapshot(q, (querySnapshot) => {
-    marketContainer.innerHTML = '';
+    // Store all items for filtering
+    allItems = [];
+    
     if (querySnapshot.empty) {
-        marketContainer.innerHTML = '<p style="grid-column: 1 / -1; text-align: center; color: var(--text-secondary);">No items on the market yet.</p>';
+        allItems = [];
     } else {
         querySnapshot.forEach((doc) => {
             const item = doc.data();
-            const itemEl = document.createElement('article');
-            itemEl.className = 'item-card';
-            
-            // Check if current user is the author
-            const isAuthor = currentUser && currentUser.uid === item.sellerId;
-            const isSold = item.isSold || false;
-
-            // Create a transformed thumbnail URL for faster loading
-            const thumbnailUrl = item.imageUrl.replace('/upload/', '/upload/w_400,h_300,c_fill,q_auto/');
-            const previewHtml = `<img src="${thumbnailUrl}" alt="${item.name}" class="item-image" style="${isSold ? 'opacity: 0.6; filter: grayscale(50%);' : ''}">`;
-
-            // Add sold badge if item is sold
-            const soldBadge = isSold ? '<div class="sold-badge">SOLD</div>' : '';
-
-            // Determine button text based on user and item status
-            let actionButton = '';
-            if (isAuthor && !isSold) {
-                actionButton = `<button class="btn-mark-sold" onclick="markItemAsSold('${doc.id}')">Mark as Sold</button>`;
-            } else if (!isSold) {
-                actionButton = `<button class="btn-contact">Contact Seller</button>`;
-            } else {
-                actionButton = `<button class="btn-sold" disabled>SOLD</button>`;
-            }
-
-            itemEl.innerHTML = `
-                ${soldBadge}
-                ${previewHtml}
-                <div class="item-content">
-                    <h3 class="item-title" style="${isSold ? 'opacity: 0.7;' : ''}">${item.name}</h3>
-                    <p class="item-price" style="${isSold ? 'text-decoration: line-through; opacity: 0.7;' : ''}">₹${item.price.toLocaleString()}</p>
-                    <p style="${isSold ? 'opacity: 0.7;' : ''}">${item.description}</p>
-                    <div class="item-seller">
-                        <img src="${item.sellerPhotoURL}" alt="${item.sellerName}">
-                        <span>${item.sellerName}</span>
-                    </div>
-                    ${actionButton}
-                </div>
-            `;
-            marketContainer.appendChild(itemEl);
+            allItems.push({ doc, item });
         });
     }
+    
+    // Apply current filter
+    filterItems(currentFilter);
     marketLoading.style.display = 'none';
+});
+
+// === INITIALIZE FILTER BUTTONS ===
+document.addEventListener('DOMContentLoaded', () => {
+    // Add event listeners to filter buttons
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const category = btn.dataset.category;
+            filterItems(category);
+        });
+    });
 });

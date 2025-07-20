@@ -3,6 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <!-- Security: Content Security Policy - Updated for all external resources including Phosphor Icons -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://www.gstatic.com https://unpkg.com https://upload-widget.cloudinary.com https://widget.cloudinary.com https://www.googletagmanager.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://fonts.gstatic.com https://cdn.jsdelivr.net https://unpkg.com; font-src 'self' https://fonts.gstatic.com https://cdn.jsdelivr.net https://unpkg.com; img-src 'self' data: https: blob:; connect-src 'self' https://firestore.googleapis.com https://firebase.googleapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://www.google-analytics.com https://analytics.google.com wss://*.firebaseio.com https://api.cloudinary.com ws://127.0.0.1:3001 ws://localhost:3001;">
+    
     <title>Hostel Market - After Hours Hub</title>
     <link rel="stylesheet" href="dashboard-styles.css">
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
@@ -35,6 +39,114 @@
         .btn-mark-sold:hover { background: #e67e22; }
         .btn-sold { background: #95a5a6; color: white; border: none; padding: 0.75rem 1rem; border-radius: 8px; font-weight: 600; cursor: not-allowed; display: block; width: 100%; text-align: center; margin-top: 1rem; }
         .item-card { position: relative; }
+
+        /* Category-based color themes */
+        .category-badge { 
+            position: absolute; 
+            top: 1rem; 
+            left: 1rem; 
+            padding: 0.4rem 0.8rem; 
+            border-radius: 15px; 
+            font-weight: 600; 
+            font-size: 0.75rem; 
+            z-index: 10; 
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+
+        /* Food Category - Warm orange/red theme */
+        .item-card.category-food { 
+            border: 2px solid rgba(255, 107, 53, 0.3);
+            background: linear-gradient(135deg, rgba(255, 107, 53, 0.1), rgba(255, 159, 28, 0.1));
+        }
+        .item-card.category-food:hover { 
+            border-color: rgba(255, 107, 53, 0.5);
+            box-shadow: 0 15px 30px rgba(255, 107, 53, 0.2);
+        }
+        .item-card.category-food .category-badge { 
+            background: linear-gradient(135deg, #ff6b35, #ff9f1c);
+            color: white;
+        }
+        .item-card.category-food .item-price { color: #ff6b35; }
+        .item-card.category-food .btn-contact { background: linear-gradient(135deg, #ff6b35, #ff9f1c); }
+        .item-card.category-food .btn-mark-sold { background: linear-gradient(135deg, #e55a2b, #e8890f); }
+
+        /* Daily Use - Fresh green theme */
+        .item-card.category-daily-use { 
+            border: 2px solid rgba(46, 204, 113, 0.3);
+            background: linear-gradient(135deg, rgba(46, 204, 113, 0.1), rgba(52, 152, 219, 0.1));
+        }
+        .item-card.category-daily-use:hover { 
+            border-color: rgba(46, 204, 113, 0.5);
+            box-shadow: 0 15px 30px rgba(46, 204, 113, 0.2);
+        }
+        .item-card.category-daily-use .category-badge { 
+            background: linear-gradient(135deg, #2ecc71, #3498db);
+            color: white;
+        }
+        .item-card.category-daily-use .item-price { color: #2ecc71; }
+        .item-card.category-daily-use .btn-contact { background: linear-gradient(135deg, #2ecc71, #3498db); }
+        .item-card.category-daily-use .btn-mark-sold { background: linear-gradient(135deg, #27ae60, #2980b9); }
+
+        /* Appliance - Tech blue/purple theme */
+        .item-card.category-appliance { 
+            border: 2px solid rgba(155, 89, 182, 0.3);
+            background: linear-gradient(135deg, rgba(155, 89, 182, 0.1), rgba(52, 152, 219, 0.1));
+        }
+        .item-card.category-appliance:hover { 
+            border-color: rgba(155, 89, 182, 0.5);
+            box-shadow: 0 15px 30px rgba(155, 89, 182, 0.2);
+        }
+        .item-card.category-appliance .category-badge { 
+            background: linear-gradient(135deg, #9b59b6, #3498db);
+            color: white;
+        }
+        .item-card.category-appliance .item-price { color: #9b59b6; }
+        .item-card.category-appliance .btn-contact { background: linear-gradient(135deg, #9b59b6, #3498db); }
+        .item-card.category-appliance .btn-mark-sold { background: linear-gradient(135deg, #8e44ad, #2980b9); }
+
+        /* Others - Neutral gray/gold theme */
+        .item-card.category-others { 
+            border: 2px solid rgba(241, 196, 15, 0.3);
+            background: linear-gradient(135deg, rgba(241, 196, 15, 0.1), rgba(149, 165, 166, 0.1));
+        }
+        .item-card.category-others:hover { 
+            border-color: rgba(241, 196, 15, 0.5);
+            box-shadow: 0 15px 30px rgba(241, 196, 15, 0.2);
+        }
+        .item-card.category-others .category-badge { 
+            background: linear-gradient(135deg, #f1c40f, #95a5a6);
+            color: white;
+        }
+        .item-card.category-others .item-price { color: #f1c40f; }
+        .item-card.category-others .btn-contact { background: linear-gradient(135deg, #f1c40f, #95a5a6); }
+        .item-card.category-others .btn-mark-sold { background: linear-gradient(135deg, #f39c12, #7f8c8d); }
+
+        /* Category filter section */
+        .category-filters {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            justify-content: center;
+        }
+        .filter-btn {
+            padding: 0.75rem 1.5rem;
+            border: 2px solid var(--glass-border);
+            background: rgba(255,255,255,0.05);
+            color: var(--text-color);
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 500;
+            backdrop-filter: blur(10px);
+        }
+        .filter-btn:hover, .filter-btn.active {
+            background: var(--primary-accent);
+            border-color: var(--primary-accent);
+            color: var(--bg-color);
+            transform: translateY(-2px);
+        }
     </style>
 </head>
 <body>
@@ -54,6 +166,16 @@
                 <div class="form-group">
                     <label for="item-description">Description</label>
                     <textarea id="item-description" rows="3" placeholder="e.g., Gently used, 1.5L capacity, works perfectly." required></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="item-category">Category</label>
+                    <select id="item-category" required>
+                        <option value="">Select a category</option>
+                        <option value="food">🍕 Food & Snacks</option>
+                        <option value="daily-use">🧴 Daily Use Items</option>
+                        <option value="appliance">⚡ Appliances & Electronics</option>
+                        <option value="others">📦 Others</option>
+                    </select>
                 </div>
                 <div class="form-group">
                     <label for="upload-button">Upload Image</label>
@@ -79,6 +201,16 @@
 
         <div class="market-list">
             <h2><i class="ph-bold ph-storefront"></i>On the Market</h2>
+            
+            <!-- Category Filters -->
+            <div class="category-filters">
+                <button class="filter-btn active" data-category="all">🌟 All Items</button>
+                <button class="filter-btn" data-category="food">🍕 Food & Snacks</button>
+                <button class="filter-btn" data-category="daily-use">🧴 Daily Use</button>
+                <button class="filter-btn" data-category="appliance">⚡ Appliances</button>
+                <button class="filter-btn" data-category="others">📦 Others</button>
+            </div>
+            
             <div id="market-loading" style="display:none; text-align:center; margin:2rem 0;">
                 <i class="ph-bold ph-spinner" style="font-size:2.5rem; animation:spin 1s linear infinite;"></i>
             </div>
