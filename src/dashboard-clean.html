@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>After Hours Hub - Dashboard</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    
+    <!-- Link to external CSS file -->
+    <link rel="stylesheet" href="dashboard-styles.css">
+</head>
+<body>
+
+    <div class="theme-toggle" id="theme-toggle" title="Toggle Dark/Light Mode">
+        <i class="ph-bold ph-sun"></i>
+    </div>
+
+    <button class="sidebar-toggle" id="sidebar-toggle" style="display: none;">
+        <i class="ph-bold ph-list"></i>
+    </button>
+
+    <div class="dashboard-container">
+        <div class="decoration"></div>
+        <div class="decoration"></div>
+        <div class="decoration"></div>
+        <div class="decoration"></div>
+        
+        <main>
+            <header class="main-header">
+                <div class="logo">
+                    <i class="ph-fill ph-coffee"></i>
+                    <h1>After Hours Hub</h1>
+                </div>
+                <div class="header-actions">
+                    <div class="search-box">
+                        <i class="ph-bold ph-magnifying-glass search-icon"></i>
+                        <input type="text" class="search-input" placeholder="Type it, find it, flex it!..." />
+                    </div>
+                    <div class="notification-bell">
+                        <i class="ph-bold ph-bell"></i>
+                        <div class="notification-badge" style="display: none;"></div> <!-- Hidden by default -->
+                    </div>
+                    <div class="user-profile">
+                        <button id="profile-dropdown-btn">
+                            <img id="user-profile-pic" src="https://via.placeholder.com/150" alt="User profile">
+                            <span id="user-display-name">Loading...</span>
+                            <i class="ph-fill ph-caret-down"></i>
+                        </button>
+                        <div id="profile-dropdown" class="hidden">
+                            <button id="sign-out-btn">Sign Out</button>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <div class="greeting">
+                <h2>Burning the midnight oil, <span id="user-name">Stud</span>?</h2>
+                <p>The Hub is open for DSU. Let's get it done.</p>
+            </div>
+
+            <div class="section-header">
+                <h2>Quick Access</h2>
+                <span class="section-count">6</span>
+            </div>
+
+            <section class="feature-grid">
+                <article class="card featured-card" data-route="help" tabindex="0" role="button" aria-label="Get Assignment Help">
+                    <i class="card-icon ph-bold ph-hand-withdraw"></i>
+                    <h3 class="card-title">Assignment Help</h3>
+                    <p class="card-tagline">Get peer support on tough assignments.</p>
+                    <span class="card-stat">Updating...</span>
+                    <div class="card-details">
+                        <p>Got a challenging task to do? <br> No worries! Let peers help you with the assignments and projects.</p>
+                        <button class="btn-small">Get Help 🫱🏻‍🫲🏻</button>
+                    </div>
+                </article>
+
+                <article class="card" data-route="notes" tabindex="0" role="button" aria-label="Access Notes Vault">
+                    <i class="card-icon ph-bold ph-book-open"></i>
+                    <h3 class="card-title">Notes Vault</h3>
+                    <p class="card-tagline">Shared knowledge for every course, every class.</p>
+                    <span class="card-stat">Updating...</span>
+                    <div class="card-details">
+                        <p>Access thousands of study notes from students across all semesters and subjects.</p>
+                        <button class="btn-small">Browse Notes</button>
+                    </div>
+                </article>
+
+                <article class="card" data-route="pyqs" tabindex="0" role="button" aria-label="Access PYQs Bank">
+                    <i class="card-icon ph-bold ph-question"></i>
+                    <h3 class="card-title">PYQs Bank</h3>
+                    <p class="card-tagline">Ace your exams with past papers.</p>
+                    <span class="card-stat">Updating...</span>
+                    <div class="card-details">
+                        <p>Previous year question papers for all subjects and semesters.</p>
+                            <button class="btn-small">Get PYQ's</button>
+                    </div>
+                </article>
+
+
+                <article class="card" data-route="esports" tabindex="0" role="button" aria-label="Join Esports Events">
+                    <i class="card-icon ph-bold ph-game-controller"></i>
+                    <h3 class="card-title">Esports & Events</h3>
+                    <p class="card-tagline">Join the DSU gaming community.</p>
+                    <span class="card-stat">Updating...</span>
+                    <div class="card-details">
+                        <p>Participate in gaming tournaments and campus events.</p>
+                        <button class="btn-small">Join Now</button>
+                    </div>
+                </article>
+
+                <article class="card" data-route="market" tabindex="0" role="button" aria-label="Browse Hostel Market">
+                    <i class="card-icon ph-bold ph-tag"></i>
+                    <h3 class="card-title">Hostel Market</h3>
+                    <p class="card-tagline">Buy & sell essentials on campus.</p>
+                    <span class="card-stat">Updating...</span>
+                    <div class="card-details">
+                        <p>Campus marketplace for buying and selling student essentials.</p>
+                        <button class="btn-small">Browse Market</button>
+                    </div>
+                </article>
+
+                <article class="card" data-route="lostfound" tabindex="0" role="button" aria-label="Check Lost & Found">
+                    <i class="card-icon ph-bold ph-magnifying-glass"></i>
+                    <h3 class="card-title">Lost & Found</h3>
+                    <p class="card-tagline">Find what you lost, return what you found.</p>
+                    <span class="card-stat">Updating...</span>
+                    <div class="card-details">
+                        <p>Help reunite lost items with their owners on campus.</p>
+                        <button class="btn-small">Check Now</button>
+                    </div>
+                </article>
+            </section>
+        </main>
+
+        <aside>
+            <section class="widget clock-widget">
+                <p id="date-display">Loading...</p>
+                <h2 id="time-display">Loading...</h2>
+            </section>
+
+            <section class="widget buzz-widget">
+                <h3>What's Buzzing?</h3>
+                <div class="timeline-item">
+                    <div class="timeline-dot">
+                        <i class="ph-fill ph-books" style="font-size: 0.8rem; color: var(--bg-color);"></i>
+                    </div> 
+                    <div class="timeline-content">
+                        <p><b>DSP notes</b> for 3rd sem uploaded by user</p>
+                        <div class="timeline-time">Updating...</div>
+                    </div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-dot">
+                        <i class="ph-fill ph-tag" style="font-size: 0.7rem; color: var(--bg-color);"></i>
+                    </div>
+                    <div class="timeline-content">
+                        <p>New listing in <b>Hostel Market</b>: "Kettle for sale"</p>
+                        <div class="timeline-time">Updating...</div>
+                    </div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-dot">
+                        <i class="ph-fill ph-hands-clapping" style="font-size: 0.7rem; color: var(--bg-color);"></i>
+                    </div>
+                    <div class="timeline-content">
+                        <p>Help request for <b>"Compiler Design"</b> assignment</p>
+                        <div class="timeline-time">Updating...</div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="widget analytics-widget">
+                <h3>Analytics</h3>
+                <div class="metric">
+                    <span class="metric-label">Active Users</span>
+                    <div style="display: flex; align-items: center;">
+                        <span class="metric-value">1247</span>
+                        <div class="metric-indicator positive"></div>
+                    </div>
+                </div>
+                <div class="metric">
+                    <span class="metric-label">Notes Shared</span>
+                    <div style="display: flex; align-items: center;">
+                        <span class="metric-value">89</span>
+                        <div class="metric-indicator positive"></div>
+                    </div>
+                </div>
+                <div class="metric">
+                    <span class="metric-label">Help Requests Live</span>
+                    <div style="display: flex; align-items: center;">
+                        <span class="metric-value">23</span>
+                        <div class="metric-indicator neutral"></div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="widget progress-widget">
+                <h3>Daily Goals</h3>
+                <div style="margin: 1rem 0;">
+                    <p style="margin-bottom: 0.5rem; font-size: 0.9rem;">Study Progress</p>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: 0%"></div>
+                    </div>
+                    <span style="font-size: 0.8rem; color: var(--text-secondary);">50% Complete</span>
+                </div>
+            </section>
+        </aside>
+    </div>
+
+    <!-- Link to external JavaScript file -->
+    <script type="module" src="dashboard-scripts.js"></script>
+    <script type="module" src="firebase-auth.js"></script>
+</body>
+</html>

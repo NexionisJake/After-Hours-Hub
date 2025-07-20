@@ -1,0 +1,24 @@
+{
+  "name": "take-1",
+  "version": "1.0.0",
+  "description": "A student dashboard for DSU featuring assignment help, notes sharing, hostel marketplace, lost & found, esports events, and analytics—all in one place.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+  "student dashboard",
+  "dsu",
+  "assignment help",
+  "notes sharing",
+  "hostel market",
+  "lost and found",
+  "esports",
+  "campus",
+  "analytics",
+  "after hours hub"
+  ],
+  "author": "Nexion",
+  "license": "ISC",
+  "type": "commonjs"
+}
