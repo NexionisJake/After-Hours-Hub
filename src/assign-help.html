@@ -3,109 +3,1271 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    
-    <!-- Security: Content Security Policy - Updated for all external resources including Phosphor Icons -->
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://www.gstatic.com https://unpkg.com https://upload-widget.cloudinary.com https://widget.cloudinary.com https://www.googletagmanager.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://fonts.gstatic.com https://cdn.jsdelivr.net https://unpkg.com; font-src 'self' https://fonts.gstatic.com https://cdn.jsdelivr.net https://unpkg.com; img-src 'self' data: https: blob:; connect-src 'self' https://firestore.googleapis.com https://firebase.googleapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://www.google-analytics.com https://analytics.google.com wss://*.firebaseio.com https://api.cloudinary.com ws://127.0.0.1:3001 ws://localhost:3001;">
-    
     <title>Assignment Help - After Hours Hub</title>
     <link rel="stylesheet" href="dashboard-styles.css">
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
     <style>
-        /* All your existing styles */
-        .page-container { max-width: 1400px; margin: 0 auto; padding: 2rem; }
-        .form-card { background: var(--glass-bg); backdrop-filter: blur(12px); border: 1px solid var(--glass-border); border-radius: 20px; padding: 2.5rem; margin-bottom: 3rem; }
-        .item-card { background: var(--glass-bg); border-radius: 16px; border: 1px solid var(--glass-border); overflow: hidden; transition: all 0.3s ease; position: relative; }
-        .item-image { width: 100%; height: 200px; object-fit: cover; }
-        .btn-contact { background: var(--secondary-accent); color: white; border: none; padding: 0.75rem 1rem; border-radius: 8px; font-weight: 600; cursor: pointer; display: block; width: 100%; text-align: center; margin-top: 1rem; }
-        
-        /* Styles for the new "Sold" functionality */
-        .sold-badge {
-            position: absolute;
-            top: 1rem;
-            left: 1rem;
-            background: #e74c3c;
-            color: white;
-            padding: 0.5rem 1rem;
-            border-radius: 20px;
-            font-weight: 700;
-            font-size: 0.8rem;
-            z-index: 10;
-            text-transform: uppercase;
+        /* Enhanced Assignment Help Page Styles */
+        .page-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+            animation: fadeInUp 0.6s ease-out;
         }
-        .btn-mark-sold {
-            background: #f39c12;
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .back-link {
+            color: var(--primary-accent);
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 2rem;
+            text-decoration: none;
+            padding: 0.75rem 1rem;
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--glass-border);
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+
+        .back-link:hover {
+            background: rgba(255, 255, 255, 0.08);
+            transform: translateX(-5px);
+            border-color: var(--primary-accent);
+        }
+
+        .page-header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        .page-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--primary-accent), #00d4aa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 0.5rem;
+        }
+
+        .page-subtitle {
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+            margin-bottom: 2rem;
+        }
+
+        .form-card, .request-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 2.5rem;
+            margin-bottom: 2rem;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .form-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--primary-accent), #00d4aa, #ff6b6b);
+            border-radius: 20px 20px 0 0;
+        }
+
+        .form-card:hover, .request-card:hover {
+            transform: translateY(-2px);
+            border-color: rgba(255, 255, 255, 0.2);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .form-card h2 {
+            font-size: 1.8rem;
+            font-weight: 600;
+            color: var(--primary-accent);
+            margin-bottom: 2rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .request-list h2 {
+            font-size: 1.8rem;
+            font-weight: 600;
+            color: var(--primary-accent);
+            margin-bottom: 2rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+            position: relative;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.75rem;
+            color: var(--text-color);
+            font-weight: 500;
+            font-size: 0.95rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .form-group small {
+            display: block;
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+            margin-top: 0.5rem;
+            font-style: italic;
+        }
+
+        .form-group input, .form-group textarea {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.08);
+            border: 2px solid var(--glass-border);
+            border-radius: 12px;
+            padding: 1rem 1.25rem;
+            color: var(--text-color);
+            font-family: var(--font-family);
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            resize: vertical;
+        }
+
+        .form-group input:focus, .form-group textarea:focus {
+            outline: none;
+            border-color: var(--primary-accent);
+            background: rgba(255, 255, 255, 0.12);
+            box-shadow: 0 0 0 4px rgba(0, 191, 166, 0.1);
+        }
+
+        .form-group input::placeholder, .form-group textarea::placeholder {
+            color: var(--text-secondary);
+        }
+
+        .btn-submit {
+            background: linear-gradient(135deg, var(--primary-accent), #00d4aa);
             color: white;
             border: none;
-            padding: 0.75rem 1rem;
-            border-radius: 8px;
+            padding: 1rem 2rem;
+            border-radius: 12px;
             font-weight: 600;
             cursor: pointer;
-            display: block;
+            transition: all 0.3s ease;
+            font-size: 1rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-submit::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
             width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s ease;
+        }
+
+        .btn-submit:hover::before {
+            left: 100%;
+        }
+
+        .btn-submit:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(0, 191, 166, 0.4);
+        }
+
+        .btn-submit:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .request-card {
+            animation: slideInLeft 0.5s ease-out;
+            margin-bottom: 1.5rem;
+        }
+
+        @keyframes slideInLeft {
+            from {
+                opacity: 0;
+                transform: translateX(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .request-author {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 1.25rem;
+            font-size: 0.95rem;
+            font-weight: 500;
+        }
+
+        .request-author img {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: 2px solid var(--primary-accent);
+            object-fit: cover;
+        }
+
+        .request-card h3 {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: var(--text-color);
+            margin-bottom: 1rem;
+            line-height: 1.4;
+        }
+
+        .request-description {
+            color: var(--text-secondary);
+            margin-top: 0.75rem;
+            line-height: 1.6;
+            font-size: 1rem;
+        }
+
+        .request-meta {
+            font-size: 0.85rem;
+            color: var(--primary-accent);
+            margin-top: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-weight: 500;
+        }
+
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: var(--primary-accent);
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .empty-state {
             text-align: center;
+            padding: 3rem 1rem;
+            color: var(--text-secondary);
+        }
+
+        .empty-state i {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+
+        .success-message {
+            background: linear-gradient(135deg, #4CAF50, #45a049);
+            color: white;
+            padding: 1rem 1.5rem;
+            border-radius: 12px;
+            margin-bottom: 1rem;
+            display: none;
+            align-items: center;
+            gap: 0.5rem;
+            animation: slideDown 0.3s ease-out;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .error-message {
+            background: linear-gradient(135deg, #f44336, #d32f2f);
+            color: white;
+            padding: 1rem 1.5rem;
+            border-radius: 12px;
+            margin-bottom: 1rem;
+            display: none;
+            align-items: center;
+            gap: 0.5rem;
+            animation: slideDown 0.3s ease-out;
+        }
+
+        .request-badges {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+            margin: 1rem 0;
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            padding: 0.4rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .badge-payment {
+            background: linear-gradient(135deg, #4CAF50, #45a049);
+            color: white;
+        }
+
+        .badge-due {
+            background: linear-gradient(135deg, #ff9800, #f57c00);
+            color: white;
+        }
+
+        .badge-due.urgent {
+            background: linear-gradient(135deg, #f44336, #d32f2f);
+            animation: pulse 2s infinite;
+        }
+
+        .badge-completed {
+            background: linear-gradient(135deg, #2196F3, #1976D2);
+            color: white;
+        }
+
+        .badge-open {
+            background: linear-gradient(135deg, #9C27B0, #7B1FA2);
+            color: white;
+        }
+
+        @keyframes pulse {
+            0% {
+                box-shadow: 0 0 0 0 rgba(244, 67, 54, 0.7);
+            }
+            70% {
+                box-shadow: 0 0 0 10px rgba(244, 67, 54, 0);
+            }
+            100% {
+                box-shadow: 0 0 0 0 rgba(244, 67, 54, 0);
+            }
+        }
+
+        .completion-toggle {
+            background: none;
+            border: 2px solid var(--primary-accent);
+            color: var(--primary-accent);
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
             margin-top: 1rem;
+        }
+
+        .completion-toggle:hover {
+            background: var(--primary-accent);
+            color: white;
+            transform: translateY(-1px);
+        }
+
+        .completion-toggle.completed {
+            background: #4CAF50;
+            border-color: #4CAF50;
+            color: white;
+        }
+
+        /* Chat Modal Styles */
+        .chat-modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(5px);
+        }
+
+        .chat-modal-content {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            margin: 2% auto;
+            padding: 0;
+            width: 90%;
+            max-width: 800px;
+            height: 80vh;
+            border-radius: 20px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            animation: slideInUp 0.3s ease-out;
+        }
+
+        @keyframes slideInUp {
+            from {
+                opacity: 0;
+                transform: translateY(50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .chat-header {
+            background: linear-gradient(135deg, var(--primary-accent), #00d4aa);
+            color: white;
+            padding: 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-radius: 20px 20px 0 0;
+        }
+
+        .chat-title h3 {
+            margin: 0;
+            font-size: 1.2rem;
+            font-weight: 600;
+        }
+
+        .chat-title p {
+            margin: 0.25rem 0 0 0;
+            opacity: 0.9;
+            font-size: 0.9rem;
+        }
+
+        .close-chat {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 0.5rem;
+            border-radius: 50%;
             transition: background-color 0.3s ease;
         }
-        .btn-mark-sold:hover {
-            background: #e67e22;
+
+        .close-chat:hover {
+            background-color: rgba(255, 255, 255, 0.2);
         }
-        .btn-sold {
-            background: #95a5a6;
-            color: white;
-            border: none;
+
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .chat-loading {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: var(--text-secondary);
+        }
+
+        .message {
+            max-width: 70%;
             padding: 0.75rem 1rem;
+            border-radius: 18px;
+            word-wrap: break-word;
+            position: relative;
+        }
+
+        .message.sent {
+            align-self: flex-end;
+            background: linear-gradient(135deg, var(--primary-accent), #00d4aa);
+            color: white;
+        }
+
+        .message.received {
+            align-self: flex-start;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid var(--glass-border);
+            color: var(--text-color);
+        }
+
+        .message-header {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 0.5rem;
+            font-size: 0.8rem;
+            opacity: 0.8;
+        }
+
+        .message-header img {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+        }
+
+        .message-content {
+            line-height: 1.4;
+        }
+
+        .message-time {
+            font-size: 0.7rem;
+            opacity: 0.7;
+            margin-top: 0.25rem;
+        }
+
+        .negotiation-message {
+            border: 2px solid #4CAF50;
+            background: linear-gradient(135deg, rgba(76, 175, 80, 0.1), rgba(69, 160, 73, 0.1));
+        }
+
+        .negotiation-content {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-weight: 600;
+        }
+
+        .offer-message {
+            border: 2px solid #ff9800;
+            background: linear-gradient(135deg, rgba(255, 152, 0, 0.1), rgba(245, 124, 0, 0.1));
+        }
+
+        .offer-content {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .offer-header {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-weight: 600;
+            color: #ff9800;
+        }
+
+        .offer-amount {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--primary-accent);
+            text-align: center;
+            padding: 0.5rem;
+            background: rgba(0, 191, 166, 0.1);
+            border-radius: 8px;
+        }
+
+        .offer-actions {
+            display: flex;
+            gap: 0.75rem;
+            justify-content: center;
+            margin-top: 0.5rem;
+        }
+
+        .btn-accept-offer,
+        .btn-counter-offer {
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: none;
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        .btn-accept-offer {
+            background: linear-gradient(135deg, #4CAF50, #45a049);
+            color: white;
+        }
+
+        .btn-counter-offer {
+            background: linear-gradient(135deg, #ff9800, #f57c00);
+            color: white;
+        }
+
+        .btn-accept-offer:hover,
+        .btn-counter-offer:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        .offer-status {
+            text-align: center;
+            padding: 0.5rem;
             border-radius: 8px;
             font-weight: 600;
-            cursor: not-allowed;
-            display: block;
-            width: 100%;
-            text-align: center;
+            margin-top: 0.5rem;
+        }
+
+        .offer-accepted {
+            background: rgba(76, 175, 80, 0.2);
+            color: #4CAF50;
+        }
+
+        .offer-countered {
+            background: rgba(255, 152, 0, 0.2);
+            color: #ff9800;
+        }
+
+        .price-negotiation {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .negotiation-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.75rem;
+            font-size: 0.9rem;
+        }
+
+        .current-price {
+            color: var(--primary-accent);
+            font-weight: 600;
+        }
+
+        .negotiation-controls {
+            display: flex;
+            gap: 0.75rem;
+            align-items: center;
+        }
+
+        .negotiation-controls input {
+            flex: 1;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid var(--glass-border);
+            border-radius: 8px;
+            padding: 0.5rem 0.75rem;
+            color: var(--text-color);
+            font-size: 0.9rem;
+        }
+
+        .btn-negotiate {
+            background: linear-gradient(135deg, #4CAF50, #45a049);
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+            transition: all 0.3s ease;
+        }
+
+        .btn-negotiate:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(76, 175, 80, 0.4);
+        }
+
+        .btn-cancel-negotiation {
+            background: none;
+            border: 1px solid var(--glass-border);
+            color: var(--text-color);
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-cancel-negotiation:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .chat-input-container {
+            border-top: 1px solid var(--glass-border);
+            padding: 1rem;
+        }
+
+        .chat-input-section {
+            display: flex;
+            gap: 0.75rem;
+            align-items: flex-end;
+        }
+
+        .chat-input-section textarea {
+            flex: 1;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            padding: 0.75rem;
+            color: var(--text-color);
+            font-family: var(--font-family);
+            resize: none;
+            max-height: 100px;
+        }
+
+        .chat-input-section textarea:focus {
+            outline: none;
+            border-color: var(--primary-accent);
+        }
+
+        .chat-controls {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .btn-make-offer,
+        .btn-send-message {
+            background: var(--primary-accent);
+            color: white;
+            border: none;
+            padding: 0.75rem;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .btn-make-offer:hover,
+        .btn-send-message:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 191, 166, 0.4);
+        }
+
+        .offer-input-section {
+            background: rgba(255, 152, 0, 0.1);
+            border: 1px solid rgba(255, 152, 0, 0.3);
+            border-radius: 12px;
+            padding: 1rem;
             margin-top: 1rem;
+        }
+
+        .offer-input-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            color: var(--text-color);
+            font-weight: 600;
+        }
+
+        .btn-cancel-offer {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            padding: 0.25rem;
+            border-radius: 4px;
+            transition: all 0.3s ease;
+        }
+
+        .btn-cancel-offer:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--text-color);
+        }
+
+        .offer-input-controls {
+            display: flex;
+            gap: 0.75rem;
+            align-items: center;
+        }
+
+        .offer-amount-input {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid var(--glass-border);
+            border-radius: 8px;
+            padding: 0.5rem 0.75rem;
+        }
+
+        .currency-symbol {
+            color: var(--primary-accent);
+            font-weight: 600;
+            margin-right: 0.5rem;
+        }
+
+        .offer-amount-input input {
+            flex: 1;
+            background: none;
+            border: none;
+            color: var(--text-color);
+            font-size: 1rem;
+            outline: none;
+        }
+
+        .btn-send-offer {
+            background: linear-gradient(135deg, #ff9800, #f57c00);
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+            transition: all 0.3s ease;
+        }
+
+        .btn-send-offer:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(255, 152, 0, 0.4);
+        }
+
+        .contact-button {
+            background: linear-gradient(135deg, var(--primary-accent), #00d4aa);
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-top: 1rem;
+            margin-left: 0.75rem;
+        }
+
+        .contact-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 191, 166, 0.4);
+        }
+
+        /* Chat Overlay Styles */
+        .chat-overlay {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 300px;
+            max-height: 400px;
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            z-index: 999;
+            transition: all 0.3s ease;
+            overflow: hidden;
+        }
+
+        .chat-overlay-header {
+            background: linear-gradient(135deg, var(--primary-accent), #00d4aa);
+            color: white;
+            padding: 1rem;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.3s ease;
+        }
+
+        .chat-overlay-header:hover {
+            background: linear-gradient(135deg, #00a67c, #00b899);
+        }
+
+        .chat-overlay-title {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-weight: 600;
+            position: relative;
+        }
+
+        .chat-notification-dot {
+            position: absolute;
+            top: -5px;
+            right: -10px;
+            width: 12px;
+            height: 12px;
+            background: #ff4444;
+            border-radius: 50%;
+            border: 2px solid white;
+            animation: pulse-notification 2s infinite;
+        }
+
+        @keyframes pulse-notification {
+            0% {
+                box-shadow: 0 0 0 0 rgba(255, 68, 68, 0.7);
+            }
+            70% {
+                box-shadow: 0 0 0 10px rgba(255, 68, 68, 0);
+            }
+            100% {
+                box-shadow: 0 0 0 0 rgba(255, 68, 68, 0);
+            }
+        }
+
+        .chat-overlay-arrow {
+            transition: transform 0.3s ease;
+        }
+
+        .chat-overlay.expanded .chat-overlay-arrow {
+            transform: rotate(180deg);
+        }
+
+        .chat-overlay-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+        }
+
+        .chat-overlay.expanded .chat-overlay-content {
+            max-height: 300px;
+        }
+
+        .chat-conversations-list {
+            padding: 0;
+        }
+
+        .no-conversations {
+            text-align: center;
+            padding: 2rem 1rem;
+            color: var(--text-secondary);
+        }
+
+        .no-conversations i {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+            opacity: 0.5;
+        }
+
+        .conversation-item {
+            padding: 1rem;
+            border-bottom: 1px solid var(--glass-border);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .conversation-item:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .conversation-item:last-child {
+            border-bottom: none;
+        }
+
+        .conversation-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+
+        .conversation-title {
+            font-weight: 600;
+            color: var(--text-color);
+            font-size: 0.9rem;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            max-width: 180px;
+        }
+
+        .conversation-time {
+            font-size: 0.7rem;
+            color: var(--text-secondary);
+        }
+
+        .conversation-preview {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .conversation-unread {
+            position: absolute;
+            top: 50%;
+            right: 1rem;
+            transform: translateY(-50%);
+            width: 8px;
+            height: 8px;
+            background: #ff4444;
+            border-radius: 50%;
+        }
+
+        .conversation-item.has-unread {
+            background: rgba(0, 191, 166, 0.05);
+            border-left: 3px solid var(--primary-accent);
+        }
+
+        .conversation-item.has-unread .conversation-title {
+            color: var(--primary-accent);
+        }
+
+        @media (max-width: 768px) {
+            .page-container {
+                padding: 1rem;
+            }
+            
+            .page-title {
+                font-size: 2rem;
+            }
+            
+            .form-card, .request-card {
+                padding: 1.5rem;
+                border-radius: 16px;
+            }
+
+            .form-row {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+
+            .request-badges {
+                gap: 0.5rem;
+            }
+
+            .badge {
+                font-size: 0.75rem;
+                padding: 0.3rem 0.6rem;
+            }
+
+            .chat-modal-content {
+                width: 95%;
+                height: 90vh;
+                margin: 1% auto;
+            }
+
+            .message {
+                max-width: 85%;
+            }
+
+            .negotiation-controls {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+
+            .chat-input-section {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+
+            .chat-controls {
+                align-self: flex-end;
+            }
+
+            .chat-overlay {
+                width: 280px;
+                bottom: 10px;
+                right: 10px;
+            }
         }
     </style>
 </head>
 <body>
     <div class="page-container">
-        <a href="dashboard-clean.html" class="back-link" style="color: var(--primary-accent); display: inline-flex; align-items: center; gap: 0.5rem; margin-bottom: 2rem;">
+        <a href="dashboard-clean.html" class="back-link">
             <i class="ph-bold ph-arrow-left"></i>
             Back to Dashboard
         </a>
 
+        <div class="page-header">
+            <h1 class="page-title">Assignment Help Hub</h1>
+            <p class="page-subtitle">Connect with classmates, share challenges, and find solutions together</p>
+        </div>
+
+        <div id="success-message" class="success-message">
+            <i class="ph-bold ph-check-circle"></i>
+            <span>Request posted successfully!</span>
+        </div>
+
+        <div id="error-message" class="error-message">
+            <i class="ph-bold ph-warning-circle"></i>
+            <span>Failed to post request. Please try again.</span>
+        </div>
+
         <div class="form-card">
-            <h2><i class="ph-bold ph-tag"></i>List an Item for Sale</h2>
-            <form id="new-item-form">
+            <h2>
+                <i class="ph-bold ph-question"></i>
+                Need Help With an Assignment?
+            </h2>
+            <form id="new-request-form">
                 <div class="form-group">
-                    <label for="item-name">Item Name</label>
-                    <input type="text" id="item-name" placeholder="e.g., Electric Kettle" required>
+                    <label for="request-title">
+                        <i class="ph-bold ph-book"></i>
+                        Title / Course Name
+                    </label>
+                    <input type="text" id="request-title" placeholder="e.g., Data Structures Mid-Term Project" required>
                 </div>
                 <div class="form-group">
-                    <label for="item-description">Description</label>
-                    <textarea id="item-description" rows="3" placeholder="e.g., Gently used, 1.5L capacity" required></textarea>
+                    <label for="request-description">
+                        <i class="ph-bold ph-chat-text"></i>
+                        Describe your problem
+                    </label>
+                    <textarea id="request-description" rows="5" placeholder="e.g., I'm stuck on implementing the binary search tree. Need help understanding the insertion logic..." required></textarea>
                 </div>
-                <div class="form-group">
-                    <label for="upload-button">Upload Image</label>
-                    <button id="upload-button" class="btn-upload" type="button">Choose Image</button>
-                    <div id="image-preview-container" style="margin-top:1rem; display:none;">
-                        <img id="image-preview" src="#" alt="Image Preview" style="max-width:180px; border-radius:12px;"/>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="payment-amount">
+                            <i class="ph-bold ph-currency-inr"></i>
+                            Payment Offer (Optional)
+                        </label>
+                        <input type="number" id="payment-amount" placeholder="e.g., 50" min="0" step="5">
+                        <small>Amount you're willing to pay for help (in INR)</small>
+                    </div>
+                    <div class="form-group">
+                        <label for="due-date">
+                            <i class="ph-bold ph-calendar"></i>
+                            Due Date
+                        </label>
+                        <input type="datetime-local" id="due-date" required>
+                        <small>When is your assignment due?</small>
                     </div>
                 </div>
-                <div class="form-group">
-                    <label for="item-price">Price (INR)</label>
-                    <input type="number" id="item-price" placeholder="e.g., 500" required>
-                </div>
-                <div id="form-message" style="margin-top:0.5rem; font-size:0.9rem;"></div>
-                <button type="submit" class="btn-submit">List My Item</button>
+                <button type="submit" class="btn-submit">
+                    <i class="ph-bold ph-paper-plane-right"></i>
+                    Post Request
+                    <span class="loading-spinner" style="display: none;"></span>
+                </button>
             </form>
         </div>
 
-        <div class="market-list">
-            <h2><i class="ph-bold ph-storefront"></i>On the Market</h2>
-            <div id="market-loading" style="display:none; text-align:center; margin:2rem 0;"></div>
-            <div id="market-container" class="market-grid"></div>
+        <div class="request-list">
+            <h2>
+                <i class="ph-bold ph-chats"></i>
+                Active Help Requests
+            </h2>
+            <div id="requests-container">
+                <div class="empty-state">
+                    <i class="ph-bold ph-chat-circle"></i>
+                    <p>No help requests yet. Be the first to ask for help!</p>
+                </div>
+            </div>
         </div>
     </div>
 
-    <script src="https://upload-widget.cloudinary.com/global/all.js" type="text/javascript"></script>
-    <script type="module" src="hostel-market.js"></script>
+    <!-- Chat Overlay (Bottom Right) -->
+    <div id="chat-overlay" class="chat-overlay" style="display: none;">
+        <div class="chat-overlay-header">
+            <div class="chat-overlay-title">
+                <i class="ph-bold ph-chat-circle"></i>
+                <span>Messages</span>
+                <div class="chat-notification-dot" id="chat-notification-dot" style="display: none;"></div>
+            </div>
+            <i class="ph-bold ph-caret-down chat-overlay-arrow" id="chat-overlay-arrow"></i>
+        </div>
+        
+        <div class="chat-overlay-content" id="chat-overlay-content">
+            <div class="chat-conversations-list" id="chat-conversations-list">
+                <div class="no-conversations">
+                    <i class="ph-bold ph-chat-circle"></i>
+                    <p>No active conversations</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chat Modal -->
+    <div id="chat-modal" class="chat-modal">
+        <div class="chat-modal-content">
+            <div class="chat-header">
+                <div class="chat-title">
+                    <h3 id="chat-request-title">Assignment Discussion</h3>
+                    <p id="chat-participants">Chat with...</p>
+                </div>
+                <button class="close-chat">>
+                    <i class="ph-bold ph-x"></i>
+                </button>
+            </div>
+            
+            <div class="chat-messages" id="chat-messages">
+                <!-- Messages will be loaded here -->
+                <div class="chat-loading">
+                    <div class="loading-spinner"></div>
+                    <p>Loading conversation...</p>
+                </div>
+            </div>
+            
+            <div class="chat-input-container">
+                <div class="chat-input-section">
+                    <textarea id="chat-input" placeholder="Type your message..." rows="2"></textarea>
+                    <div class="chat-controls">
+                        <button class="btn-make-offer" onclick="showOfferInput()" title="Make Price Offer" style="display: none;">
+                            <i class="ph-bold ph-currency-dollar"></i>
+                        </button>
+                        <button class="btn-send-message">>
+                            <i class="ph-bold ph-paper-plane-right"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="offer-input-section" id="offer-input-section" style="display: none;">
+                    <div class="offer-input-header">
+                        <span>Make a price offer for this assignment:</span>
+                        <button class="btn-cancel-offer" onclick="hideOfferInput()">
+                            <i class="ph-bold ph-x"></i>
+                        </button>
+                    </div>
+                    <div class="offer-input-controls">
+                        <div class="offer-amount-input">
+                            <span class="currency-symbol">₹</span>
+                            <input type="number" id="offer-amount" placeholder="Enter amount" min="0" step="5">
+                        </div>
+                        <button class="btn-send-offer" onclick="sendOffer()">
+                            <i class="ph-bold ph-handshake"></i>
+                            Send Offer
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="assign-help.js"></script>
 </body>
 </html>

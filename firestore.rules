@@ -1,0 +1,49 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // === MARKET LISTINGS SECURITY ===
+    match /marketListings/{itemId} {
+      // Anyone can READ listings (public marketplace)
+      allow read: if true;
+      
+      // Only authenticated users can CREATE listings
+      allow create: if request.auth != null 
+                   && request.auth.uid == request.resource.data.sellerId;
+      
+      // Only the ORIGINAL SELLER can UPDATE their items (mark as sold, edit, etc.)
+      // This prevents users from marking other people's items as sold!
+      allow update: if request.auth != null 
+                   && request.auth.uid == resource.data.sellerId;
+      
+      // Only the ORIGINAL SELLER can DELETE their items
+      allow delete: if request.auth != null 
+                   && request.auth.uid == resource.data.sellerId;
+    }
+    
+    // === ASSIGNMENT HELP SECURITY ===
+    match /assignmentRequests/{requestId} {
+      allow read: if true;
+      allow create: if request.auth != null;
+      allow update: if request.auth != null 
+                   && (request.auth.uid == resource.data.requesterId 
+                       || request.auth.uid == resource.data.helperId);
+      allow delete: if request.auth != null 
+                   && request.auth.uid == resource.data.requesterId;
+    }
+    
+    // === CHAT MESSAGES SECURITY ===
+    match /chatMessages/{messageId} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null 
+                   && request.auth.uid == request.resource.data.senderId;
+      // Messages cannot be updated or deleted (audit trail)
+    }
+    
+    // === DENY ALL OTHER COLLECTIONS ===
+    // This ensures we don't accidentally expose other data
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

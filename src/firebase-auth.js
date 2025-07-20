@@ -3,19 +3,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-analytics.js";
 import { getAuth, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-
-// Your web app's Firebase configuration
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
-const firebaseConfig = {
-  apiKey: "AIzaSyBCO6Q8aCJBNF1dMy34TlviwQ3ivc3NvkE",
-  authDomain: "after-hours-hub.firebaseapp.com",
-  databaseURL: "https://after-hours-hub-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "after-hours-hub",
-  storageBucket: "after-hours-hub.appspot.com",
-  messagingSenderId: "267243470607",
-  appId: "1:267243470607:web:b45dab5ba0828f2adf487a",
-  measurementId: "G-0ZYV2HJNBE"
-};
+import { firebaseConfig } from './firebase-config.js';
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);

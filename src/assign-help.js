@@ -1,18 +1,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import { getFirestore, collection, addDoc, query, orderBy, onSnapshot, serverTimestamp, doc, updateDoc, where, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-
-// Use the same Firebase config as your other files
-const firebaseConfig = {
-    apiKey: "AIzaSyBCO6Q8aCJBNF1dMy34TlviwQ3ivc3NvkE",
-    authDomain: "after-hours-hub.firebaseapp.com",
-    databaseURL: "https://after-hours-hub-default-rtdb.asia-southeast1.firebasedatabase.app",
-    projectId: "after-hours-hub",
-    storageBucket: "after-hours-hub.appspot.com",
-    messagingSenderId: "267243470607",
-    appId: "1:267243470607:web:b45dab5ba0828f2adf487a",
-    measurementId: "G-0ZYV2HJNBE"
-};
+import { firebaseConfig } from './firebase-config.js';
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
@@ -1018,27 +1007,29 @@ mutationObserver = new MutationObserver((mutations) => {
 
 mutationObserver.observe(requestsContainer, { childList: true });
 
-// Make functions available globally for onclick handlers
-window.toggleRequestCompletion = function(docId, currentStatus) {
-    toggleCompletion(docId, currentStatus);
-};
+// === SECURE EVENT LISTENERS (NO GLOBAL FUNCTION EXPOSURE) ===
+// This replaces the insecure window.functionName pattern
 
-window.openChat = function(requestId) {
-    const requestData = requestsData.get(requestId);
-    if (requestData) {
-        openChatModal(requestId, requestData);
-    } else {
-        console.error('Request data not found for ID:', requestId);
+document.addEventListener('DOMContentLoaded', function() {
+    // Setup secure event listeners for modal buttons
+    const closeChatBtn = document.querySelector('.close-chat');
+    if (closeChatBtn) {
+        closeChatBtn.addEventListener('click', closeChatModal);
     }
-};
 
-window.closeChatModal = closeChatModal;
-window.sendMessage = sendMessage;
-window.showPriceNegotiation = showPriceNegotiation;
-window.cancelNegotiation = cancelNegotiation;
-window.sendNegotiation = sendNegotiation;
-window.toggleChatOverlay = toggleChatOverlay;
-window.openConversationFromOverlay = openConversationFromOverlay;
+    const sendMessageBtn = document.querySelector('.btn-send-message');
+    if (sendMessageBtn) {
+        sendMessageBtn.addEventListener('click', sendMessage);
+    }
+
+    const chatOverlayHeader = document.querySelector('.chat-overlay-header');
+    if (chatOverlayHeader) {
+        chatOverlayHeader.addEventListener('click', toggleChatOverlay);
+    }
+
+    // Note: Dynamic buttons (like toggleRequestCompletion, openChat) 
+    // are handled in the displayRequests function where they are created
+});
 
 // Initialize due date field with minimum date as current date/time
 const dueDateInput = document.getElementById('due-date');

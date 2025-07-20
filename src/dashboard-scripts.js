@@ -3,18 +3,7 @@
 // ===== START: FIREBASE AUTH GUARD =====
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-
-// IMPORTANT: Use the SAME firebaseConfig from your firebase-auth.js file
-const firebaseConfig = {
-    apiKey: "AIzaSyBCO6Q8aCJBNF1dMy34TlviwQ3ivc3NvkE",
-    authDomain: "after-hours-hub.firebaseapp.com",
-    databaseURL: "https://after-hours-hub-default-rtdb.asia-southeast1.firebasedatabase.app",
-    projectId: "after-hours-hub",
-    storageBucket: "after-hours-hub.appspot.com",
-    messagingSenderId: "267243470607",
-    appId: "1:267243470607:web:b45dab5ba0828f2adf487a",
-    measurementId: "G-0ZYV2HJNBE"
-};
+import { firebaseConfig } from './firebase-config.js';
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
@@ -50,7 +39,17 @@ function updateGreetingWithUser(user) {
     // Update greeting element if it exists
     const greetingElement = document.querySelector('.greeting h2');
     if (greetingElement) {
-        greetingElement.innerHTML = `${timeGreeting}, <span id="user-name">${firstName}</span>! ${motivationalText}`;
+        // SECURE: Create elements programmatically to prevent XSS
+        greetingElement.textContent = `${timeGreeting}, `;
+        
+        const nameSpan = document.createElement('span');
+        nameSpan.id = 'user-name';
+        nameSpan.textContent = firstName; // Safe: textContent prevents XSS
+        
+        const motivationText = document.createTextNode(`! ${motivationalText}`);
+        
+        greetingElement.appendChild(nameSpan);
+        greetingElement.appendChild(motivationText);
     }
 }
 
