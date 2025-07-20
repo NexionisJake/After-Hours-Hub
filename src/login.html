@@ -3,6 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <!-- Security: Content Security Policy -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://www.gstatic.com https://unpkg.com https://cdn.tailwindcss.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.tailwindcss.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://firestore.googleapis.com https://firebase.googleapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com;">
+    
     <title>Login - After Hours Hub</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
@@ -147,8 +151,11 @@
                 loginCard.classList.add('loaded');
             }, 100);
 
-            // Guest Login Handler
+            // Guest Login Handler - SECURITY NOTE: This bypasses authentication
             guestLoginBtn.addEventListener('click', () => {
+                // Security Warning: Guest login should be removed in production
+                console.warn('⚠️ SECURITY: Guest login bypasses authentication - remove in production');
+                
                 guestLoginBtn.innerHTML = `
                     <div class="spinner dark"></div>
                     <span>Redirecting...</span>
@@ -156,10 +163,8 @@
                 guestLoginBtn.disabled = true;
                 document.getElementById('google-login-btn').disabled = true;
 
-                setTimeout(() => {
-                    // Redirect to dashboard, but without real authentication
-                    window.location.href = 'dashboard-clean.html';
-                }, 500);
+                // Immediate redirect - no need for setTimeout security delay
+                window.location.href = 'dashboard-clean.html';
             });
         });
     </script>

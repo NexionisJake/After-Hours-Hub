@@ -29,7 +29,14 @@ onAuthStateChanged(auth, (user) => {
         const userDisplayName = document.getElementById('user-display-name');
         const userProfilePic = document.getElementById('user-profile-pic');
         if (userDisplayName) userDisplayName.textContent = user.displayName;
-        if (userProfilePic) userProfilePic.src = user.photoURL;
+        if (userProfilePic) {
+            if (user.photoURL) {
+                userProfilePic.src = user.photoURL;
+            } else {
+                const userName = user.displayName || user.email || 'User';
+                userProfilePic.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(userName)}&size=150&background=random`;
+            }
+        }
     } else {
         // No user is signed in. Redirect to login page.
         console.log("No user found, redirecting to login.");
@@ -171,9 +178,15 @@ document.addEventListener('DOMContentLoaded', () => {
             // If the card has a data-route, navigate to the new page
             const route = card.dataset.route;
             if (route === 'help') {
-                window.location.href = 'assignment-help.html';
+                window.location.href = 'assign-help.html';
                 return; // Stop further execution
             }
+            // ===== ADD THIS NEW CASE =====
+            if (route === 'market') {
+                window.location.href = 'hostel-market.html';
+                return;
+            }
+            // ===== END NEW CASE =====
             // --- END NEW LOGIC ---
 
             const isExpanded = card.classList.contains('expanded');

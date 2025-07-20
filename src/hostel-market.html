@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hostel Market - After Hours Hub</title>
+    <link rel="stylesheet" href="dashboard-styles.css">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <style>
+        /* Additional styles for the market page */
+        .page-container { max-width: 1400px; margin: 0 auto; padding: 2rem; }
+        .form-card { background: var(--glass-bg); backdrop-filter: blur(12px); border: 1px solid var(--glass-border); border-radius: 20px; padding: 2.5rem; margin-bottom: 3rem; }
+        .form-card h2 { font-size: 1.8rem; font-weight: 600; color: var(--primary-accent); margin-bottom: 2rem; display: flex; align-items: center; gap: 0.75rem; }
+        .form-group { margin-bottom: 1.5rem; }
+        .form-group label { display: block; margin-bottom: 0.75rem; color: var(--text-color); font-weight: 500; }
+        .form-group input, .form-group textarea, .form-group select { width: 100%; background: rgba(255, 255, 255, 0.08); border: 2px solid var(--glass-border); border-radius: 12px; padding: 1rem; color: var(--text-color); font-family: var(--font-family); font-size: 1rem; }
+        .form-group input:focus, .form-group textarea:focus, .form-group select:focus { outline: none; border-color: var(--primary-accent); }
+        .btn-submit { background: linear-gradient(135deg, var(--primary-accent), #00d4aa); color: white; border: none; padding: 1rem 2rem; border-radius: 12px; font-weight: 600; cursor: pointer; transition: all 0.3s ease; }
+        .market-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.5rem; }
+        .item-card { background: var(--glass-bg); border-radius: 16px; border: 1px solid var(--glass-border); overflow: hidden; transition: all 0.3s ease; }
+        .item-card:hover { transform: translateY(-5px); box-shadow: 0 15px 30px rgba(0,0,0,0.3); }
+        .item-image { width: 100%; height: 200px; object-fit: cover; background-color: rgba(255,255,255,0.1); }
+        .item-content { padding: 1.5rem; }
+        .item-title { font-size: 1.25rem; font-weight: 600; margin-bottom: 0.5rem; }
+        .item-price { font-size: 1.5rem; font-weight: 700; color: var(--primary-accent); margin-bottom: 1rem; }
+        .item-seller { display: flex; align-items: center; gap: 0.5rem; margin-top: 1rem; font-size: 0.9rem; }
+        .item-seller img { width: 30px; height: 30px; border-radius: 50%; }
+        .btn-contact { background: var(--secondary-accent); color: white; border: none; padding: 0.75rem 1rem; border-radius: 8px; font-weight: 600; cursor: pointer; display: block; width: 100%; text-align: center; margin-top: 1rem; }
+        .btn-upload { background: rgba(255,255,255,0.05); border: 1px dashed var(--glass-border); color: var(--text-secondary); padding: 1rem; border-radius: 12px; cursor: pointer; transition: all 0.3s ease; text-align: center; }
+        .btn-upload:hover { background: rgba(255,255,255,0.1); border-color: var(--primary-accent); color: var(--primary-accent); }
+        
+        /* Sold item styles */
+        .sold-badge { position: absolute; top: 1rem; right: 1rem; background: #e74c3c; color: white; padding: 0.5rem 1rem; border-radius: 20px; font-weight: 700; font-size: 0.8rem; z-index: 10; }
+        .btn-mark-sold { background: #f39c12; color: white; border: none; padding: 0.75rem 1rem; border-radius: 8px; font-weight: 600; cursor: pointer; display: block; width: 100%; text-align: center; margin-top: 1rem; transition: all 0.3s ease; }
+        .btn-mark-sold:hover { background: #e67e22; }
+        .btn-sold { background: #95a5a6; color: white; border: none; padding: 0.75rem 1rem; border-radius: 8px; font-weight: 600; cursor: not-allowed; display: block; width: 100%; text-align: center; margin-top: 1rem; }
+        .item-card { position: relative; }
+    </style>
+</head>
+<body>
+    <div class="page-container">
+        <a href="dashboard-clean.html" class="back-link" style="color: var(--primary-accent); display: inline-flex; align-items: center; gap: 0.5rem; margin-bottom: 2rem;">
+            <i class="ph-bold ph-arrow-left"></i>
+            Back to Dashboard
+        </a>
+
+        <div class="form-card">
+            <h2><i class="ph-bold ph-tag"></i>List an Item for Sale</h2>
+            <form id="new-item-form">
+                <div class="form-group">
+                    <label for="item-name">Item Name</label>
+                    <input type="text" id="item-name" placeholder="e.g., Electric Kettle" required>
+                </div>
+                <div class="form-group">
+                    <label for="item-description">Description</label>
+                    <textarea id="item-description" rows="3" placeholder="e.g., Gently used, 1.5L capacity, works perfectly." required></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="upload-button">Upload Image</label>
+                    <button id="upload-button" class="btn-upload" type="button">
+                        <i class="ph-bold ph-upload-simple"></i> Choose Image
+                    </button>
+                    <input type="file" id="item-image-file" style="display: none;" accept="image/*">
+                    
+                    <div id="image-preview-container" style="margin-top:1rem; display:none;">
+                        <img id="image-preview" src="#" alt="Image Preview" style="max-width:180px; border-radius:12px;"/>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="item-price">Price (INR)</label>
+                    <input type="number" id="item-price" placeholder="e.g., 500" required>
+                </div>
+                <div class="form-group">
+                    <div id="form-message" style="margin-top:0.5rem; font-size:0.9rem;"></div>
+                </div>
+                <button type="submit" class="btn-submit">List My Item</button>
+            </form>
+        </div>
+
+        <div class="market-list">
+            <h2><i class="ph-bold ph-storefront"></i>On the Market</h2>
+            <div id="market-loading" style="display:none; text-align:center; margin:2rem 0;">
+                <i class="ph-bold ph-spinner" style="font-size:2.5rem; animation:spin 1s linear infinite;"></i>
+            </div>
+            <div id="market-container" class="market-grid"></div>
+        </div>
+    </div>
+
+    <script src="https://upload-widget.cloudinary.com/global/all.js" type="text/javascript"></script>
+    <script type="module" src="hostel-market.js"></script>
+</body>
+</html>

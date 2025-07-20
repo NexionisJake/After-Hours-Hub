@@ -571,90 +571,6 @@
             font-weight: 600;
         }
 
-        .offer-message {
-            border: 2px solid #ff9800;
-            background: linear-gradient(135deg, rgba(255, 152, 0, 0.1), rgba(245, 124, 0, 0.1));
-        }
-
-        .offer-content {
-            display: flex;
-            flex-direction: column;
-            gap: 0.75rem;
-        }
-
-        .offer-header {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            font-weight: 600;
-            color: #ff9800;
-        }
-
-        .offer-amount {
-            font-size: 1.2rem;
-            font-weight: 700;
-            color: var(--primary-accent);
-            text-align: center;
-            padding: 0.5rem;
-            background: rgba(0, 191, 166, 0.1);
-            border-radius: 8px;
-        }
-
-        .offer-actions {
-            display: flex;
-            gap: 0.75rem;
-            justify-content: center;
-            margin-top: 0.5rem;
-        }
-
-        .btn-accept-offer,
-        .btn-counter-offer {
-            padding: 0.5rem 1rem;
-            border-radius: 8px;
-            font-size: 0.85rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            border: none;
-            display: flex;
-            align-items: center;
-            gap: 0.25rem;
-        }
-
-        .btn-accept-offer {
-            background: linear-gradient(135deg, #4CAF50, #45a049);
-            color: white;
-        }
-
-        .btn-counter-offer {
-            background: linear-gradient(135deg, #ff9800, #f57c00);
-            color: white;
-        }
-
-        .btn-accept-offer:hover,
-        .btn-counter-offer:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-        }
-
-        .offer-status {
-            text-align: center;
-            padding: 0.5rem;
-            border-radius: 8px;
-            font-weight: 600;
-            margin-top: 0.5rem;
-        }
-
-        .offer-accepted {
-            background: rgba(76, 175, 80, 0.2);
-            color: #4CAF50;
-        }
-
-        .offer-countered {
-            background: rgba(255, 152, 0, 0.2);
-            color: #ff9800;
-        }
-
         .price-negotiation {
             background: rgba(255, 255, 255, 0.05);
             border: 1px solid var(--glass-border);
@@ -760,7 +676,7 @@
             gap: 0.5rem;
         }
 
-        .btn-make-offer,
+        .btn-negotiate-price,
         .btn-send-message {
             background: var(--primary-accent);
             color: white;
@@ -774,93 +690,10 @@
             justify-content: center;
         }
 
-        .btn-make-offer:hover,
+        .btn-negotiate-price:hover,
         .btn-send-message:hover {
             transform: translateY(-2px);
             box-shadow: 0 4px 12px rgba(0, 191, 166, 0.4);
-        }
-
-        .offer-input-section {
-            background: rgba(255, 152, 0, 0.1);
-            border: 1px solid rgba(255, 152, 0, 0.3);
-            border-radius: 12px;
-            padding: 1rem;
-            margin-top: 1rem;
-        }
-
-        .offer-input-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1rem;
-            color: var(--text-color);
-            font-weight: 600;
-        }
-
-        .btn-cancel-offer {
-            background: none;
-            border: none;
-            color: var(--text-secondary);
-            cursor: pointer;
-            padding: 0.25rem;
-            border-radius: 4px;
-            transition: all 0.3s ease;
-        }
-
-        .btn-cancel-offer:hover {
-            background: rgba(255, 255, 255, 0.1);
-            color: var(--text-color);
-        }
-
-        .offer-input-controls {
-            display: flex;
-            gap: 0.75rem;
-            align-items: center;
-        }
-
-        .offer-amount-input {
-            flex: 1;
-            display: flex;
-            align-items: center;
-            background: rgba(255, 255, 255, 0.08);
-            border: 1px solid var(--glass-border);
-            border-radius: 8px;
-            padding: 0.5rem 0.75rem;
-        }
-
-        .currency-symbol {
-            color: var(--primary-accent);
-            font-weight: 600;
-            margin-right: 0.5rem;
-        }
-
-        .offer-amount-input input {
-            flex: 1;
-            background: none;
-            border: none;
-            color: var(--text-color);
-            font-size: 1rem;
-            outline: none;
-        }
-
-        .btn-send-offer {
-            background: linear-gradient(135deg, #ff9800, #f57c00);
-            color: white;
-            border: none;
-            padding: 0.5rem 1rem;
-            border-radius: 8px;
-            font-size: 0.85rem;
-            font-weight: 600;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 0.25rem;
-            transition: all 0.3s ease;
-        }
-
-        .btn-send-offer:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(255, 152, 0, 0.4);
         }
 
         .contact-button {
@@ -1234,33 +1067,29 @@
             </div>
             
             <div class="chat-input-container">
+                <div class="price-negotiation" id="price-negotiation" style="display: none;">
+                    <div class="negotiation-info">
+                        <span class="current-price">Current offer: ₹<span id="current-offer">0</span></span>
+                        <span class="negotiation-label">Propose new price:</span>
+                    </div>
+                    <div class="negotiation-controls">
+                        <input type="number" id="negotiated-price" placeholder="Enter amount" min="0" step="5">
+                        <button class="btn-negotiate" onclick="sendNegotiation()">
+                            <i class="ph-bold ph-handshake"></i>
+                            Propose
+                        </button>
+                        <button class="btn-cancel-negotiation" onclick="cancelNegotiation()">Cancel</button>
+                    </div>
+                </div>
+                
                 <div class="chat-input-section">
                     <textarea id="chat-input" placeholder="Type your message..." rows="2"></textarea>
                     <div class="chat-controls">
-                        <button class="btn-make-offer" onclick="showOfferInput()" title="Make Price Offer" style="display: none;">
+                        <button class="btn-negotiate-price" onclick="showPriceNegotiation()" title="Negotiate Price">
                             <i class="ph-bold ph-currency-dollar"></i>
                         </button>
                         <button class="btn-send-message" onclick="sendMessage()">
                             <i class="ph-bold ph-paper-plane-right"></i>
-                        </button>
-                    </div>
-                </div>
-                
-                <div class="offer-input-section" id="offer-input-section" style="display: none;">
-                    <div class="offer-input-header">
-                        <span>Make a price offer for this assignment:</span>
-                        <button class="btn-cancel-offer" onclick="hideOfferInput()">
-                            <i class="ph-bold ph-x"></i>
-                        </button>
-                    </div>
-                    <div class="offer-input-controls">
-                        <div class="offer-amount-input">
-                            <span class="currency-symbol">₹</span>
-                            <input type="number" id="offer-amount" placeholder="Enter amount" min="0" step="5">
-                        </div>
-                        <button class="btn-send-offer" onclick="sendOffer()">
-                            <i class="ph-bold ph-handshake"></i>
-                            Send Offer
                         </button>
                     </div>
                 </div>
