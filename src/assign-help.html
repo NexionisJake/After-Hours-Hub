@@ -15,6 +15,15 @@
             padding: 2rem;
             animation: fadeInUp 0.6s ease-out;
         }
+        
+        /* Two-column layout for larger screens */
+        @media (min-width: 1024px) {
+            .main-content {
+                display: grid;
+                grid-template-columns: 40% 1fr;
+                gap: 2rem;
+            }
+        }
 
         @keyframes fadeInUp {
             from {
@@ -433,647 +442,6 @@
             color: white;
         }
 
-        /* Chat Modal Styles */
-        .chat-modal {
-            display: none;
-            position: fixed;
-            z-index: 1000;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.7);
-            backdrop-filter: blur(5px);
-        }
-
-        .chat-modal-content {
-            background: var(--glass-bg);
-            backdrop-filter: blur(20px);
-            border: 1px solid var(--glass-border);
-            margin: 2% auto;
-            padding: 0;
-            width: 90%;
-            max-width: 800px;
-            height: 80vh;
-            border-radius: 20px;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-            animation: slideInUp 0.3s ease-out;
-        }
-
-        @keyframes slideInUp {
-            from {
-                opacity: 0;
-                transform: translateY(50px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .chat-header {
-            background: linear-gradient(135deg, var(--primary-accent), #00d4aa);
-            color: white;
-            padding: 1.5rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-radius: 20px 20px 0 0;
-        }
-
-        .chat-title h3 {
-            margin: 0;
-            font-size: 1.2rem;
-            font-weight: 600;
-        }
-
-        .chat-title p {
-            margin: 0.25rem 0 0 0;
-            opacity: 0.9;
-            font-size: 0.9rem;
-        }
-
-        .close-chat {
-            background: none;
-            border: none;
-            color: white;
-            font-size: 1.5rem;
-            cursor: pointer;
-            padding: 0.5rem;
-            border-radius: 50%;
-            transition: background-color 0.3s ease;
-        }
-
-        .close-chat:hover {
-            background-color: rgba(255, 255, 255, 0.2);
-        }
-
-        .chat-messages {
-            flex: 1;
-            overflow-y: auto;
-            padding: 1rem;
-            display: flex;
-            flex-direction: column;
-            gap: 1rem;
-        }
-
-        .chat-loading {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 100%;
-            color: var(--text-secondary);
-        }
-
-        .message {
-            max-width: 70%;
-            padding: 0.75rem 1rem;
-            border-radius: 18px;
-            word-wrap: break-word;
-            position: relative;
-        }
-
-        .message.sent {
-            align-self: flex-end;
-            background: linear-gradient(135deg, var(--primary-accent), #00d4aa);
-            color: white;
-        }
-
-        .message.received {
-            align-self: flex-start;
-            background: rgba(255, 255, 255, 0.1);
-            border: 1px solid var(--glass-border);
-            color: var(--text-color);
-        }
-
-        .message-header {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            margin-bottom: 0.5rem;
-            font-size: 0.8rem;
-            opacity: 0.8;
-        }
-
-        .message-header img {
-            width: 20px;
-            height: 20px;
-            border-radius: 50%;
-        }
-
-        .message-content {
-            line-height: 1.4;
-        }
-
-        .message-time {
-            font-size: 0.7rem;
-            opacity: 0.7;
-            margin-top: 0.25rem;
-        }
-
-        .negotiation-message {
-            border: 2px solid #4CAF50;
-            background: linear-gradient(135deg, rgba(76, 175, 80, 0.1), rgba(69, 160, 73, 0.1));
-        }
-
-        .negotiation-content {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            font-weight: 600;
-        }
-
-        .offer-message {
-            border: 2px solid #ff9800;
-            background: linear-gradient(135deg, rgba(255, 152, 0, 0.1), rgba(245, 124, 0, 0.1));
-        }
-
-        .offer-content {
-            display: flex;
-            flex-direction: column;
-            gap: 0.75rem;
-        }
-
-        .offer-header {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            font-weight: 600;
-            color: #ff9800;
-        }
-
-        .offer-amount {
-            font-size: 1.2rem;
-            font-weight: 700;
-            color: var(--primary-accent);
-            text-align: center;
-            padding: 0.5rem;
-            background: rgba(0, 191, 166, 0.1);
-            border-radius: 8px;
-        }
-
-        .offer-actions {
-            display: flex;
-            gap: 0.75rem;
-            justify-content: center;
-            margin-top: 0.5rem;
-        }
-
-        .btn-accept-offer,
-        .btn-counter-offer {
-            padding: 0.5rem 1rem;
-            border-radius: 8px;
-            font-size: 0.85rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            border: none;
-            display: flex;
-            align-items: center;
-            gap: 0.25rem;
-        }
-
-        .btn-accept-offer {
-            background: linear-gradient(135deg, #4CAF50, #45a049);
-            color: white;
-        }
-
-        .btn-counter-offer {
-            background: linear-gradient(135deg, #ff9800, #f57c00);
-            color: white;
-        }
-
-        .btn-accept-offer:hover,
-        .btn-counter-offer:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-        }
-
-        .offer-status {
-            text-align: center;
-            padding: 0.5rem;
-            border-radius: 8px;
-            font-weight: 600;
-            margin-top: 0.5rem;
-        }
-
-        .offer-accepted {
-            background: rgba(76, 175, 80, 0.2);
-            color: #4CAF50;
-        }
-
-        .offer-countered {
-            background: rgba(255, 152, 0, 0.2);
-            color: #ff9800;
-        }
-
-        .price-negotiation {
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid var(--glass-border);
-            border-radius: 12px;
-            padding: 1rem;
-            margin-bottom: 1rem;
-        }
-
-        .negotiation-info {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 0.75rem;
-            font-size: 0.9rem;
-        }
-
-        .current-price {
-            color: var(--primary-accent);
-            font-weight: 600;
-        }
-
-        .negotiation-controls {
-            display: flex;
-            gap: 0.75rem;
-            align-items: center;
-        }
-
-        .negotiation-controls input {
-            flex: 1;
-            background: rgba(255, 255, 255, 0.08);
-            border: 1px solid var(--glass-border);
-            border-radius: 8px;
-            padding: 0.5rem 0.75rem;
-            color: var(--text-color);
-            font-size: 0.9rem;
-        }
-
-        .btn-negotiate {
-            background: linear-gradient(135deg, #4CAF50, #45a049);
-            color: white;
-            border: none;
-            padding: 0.5rem 1rem;
-            border-radius: 8px;
-            font-size: 0.85rem;
-            font-weight: 600;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 0.25rem;
-            transition: all 0.3s ease;
-        }
-
-        .btn-negotiate:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(76, 175, 80, 0.4);
-        }
-
-        .btn-cancel-negotiation {
-            background: none;
-            border: 1px solid var(--glass-border);
-            color: var(--text-color);
-            padding: 0.5rem 1rem;
-            border-radius: 8px;
-            font-size: 0.85rem;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .btn-cancel-negotiation:hover {
-            background: rgba(255, 255, 255, 0.1);
-        }
-
-        .chat-input-container {
-            border-top: 1px solid var(--glass-border);
-            padding: 1rem;
-        }
-
-        .chat-input-section {
-            display: flex;
-            gap: 0.75rem;
-            align-items: flex-end;
-        }
-
-        .chat-input-section textarea {
-            flex: 1;
-            background: rgba(255, 255, 255, 0.08);
-            border: 1px solid var(--glass-border);
-            border-radius: 12px;
-            padding: 0.75rem;
-            color: var(--text-color);
-            font-family: var(--font-family);
-            resize: none;
-            max-height: 100px;
-        }
-
-        .chat-input-section textarea:focus {
-            outline: none;
-            border-color: var(--primary-accent);
-        }
-
-        .chat-controls {
-            display: flex;
-            gap: 0.5rem;
-        }
-
-        .btn-make-offer,
-        .btn-attach-file,
-        .btn-send-message {
-            background: var(--primary-accent);
-            color: white;
-            border: none;
-            padding: 0.75rem;
-            border-radius: 50%;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .btn-make-offer:hover,
-        .btn-attach-file:hover,
-        .btn-send-message:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0, 191, 166, 0.4);
-        }
-
-        .btn-attach-file {
-            background: linear-gradient(135deg, #9C27B0, #7B1FA2);
-        }
-
-        .btn-attach-file:hover {
-            box-shadow: 0 4px 12px rgba(156, 39, 176, 0.4);
-        }
-
-        .offer-input-section {
-            background: rgba(255, 152, 0, 0.1);
-            border: 1px solid rgba(255, 152, 0, 0.3);
-            border-radius: 12px;
-            padding: 1rem;
-            margin-top: 1rem;
-        }
-
-        .offer-input-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1rem;
-            color: var(--text-color);
-            font-weight: 600;
-        }
-
-        .btn-cancel-offer {
-            background: none;
-            border: none;
-            color: var(--text-secondary);
-            cursor: pointer;
-            padding: 0.25rem;
-            border-radius: 4px;
-            transition: all 0.3s ease;
-        }
-
-        .btn-cancel-offer:hover {
-            background: rgba(255, 255, 255, 0.1);
-            color: var(--text-color);
-        }
-
-        .offer-input-controls {
-            display: flex;
-            gap: 0.75rem;
-            align-items: center;
-        }
-
-        .offer-amount-input {
-            flex: 1;
-            display: flex;
-            align-items: center;
-            background: rgba(255, 255, 255, 0.08);
-            border: 1px solid var(--glass-border);
-            border-radius: 8px;
-            padding: 0.5rem 0.75rem;
-        }
-
-        .currency-symbol {
-            color: var(--primary-accent);
-            font-weight: 600;
-            margin-right: 0.5rem;
-        }
-
-        .offer-amount-input input {
-            flex: 1;
-            background: none;
-            border: none;
-            color: var(--text-color);
-            font-size: 1rem;
-            outline: none;
-        }
-
-        .btn-send-offer {
-            background: linear-gradient(135deg, #ff9800, #f57c00);
-            color: white;
-            border: none;
-            padding: 0.5rem 1rem;
-            border-radius: 8px;
-            font-size: 0.85rem;
-            font-weight: 600;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 0.25rem;
-            transition: all 0.3s ease;
-        }
-
-        .btn-send-offer:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(255, 152, 0, 0.4);
-        }
-
-        .contact-button {
-            background: linear-gradient(135deg, var(--primary-accent), #00d4aa);
-            color: white;
-            border: none;
-            padding: 0.5rem 1rem;
-            border-radius: 8px;
-            font-size: 0.85rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            margin-top: 1rem;
-            margin-left: 0.75rem;
-        }
-
-        .contact-button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0, 191, 166, 0.4);
-        }
-
-        /* Chat Overlay Styles */
-        .chat-overlay {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            width: 300px;
-            max-height: 400px;
-            background: var(--glass-bg);
-            backdrop-filter: blur(20px);
-            border: 1px solid var(--glass-border);
-            border-radius: 16px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-            z-index: 999;
-            transition: all 0.3s ease;
-            overflow: hidden;
-        }
-
-        .chat-overlay-header {
-            background: linear-gradient(135deg, var(--primary-accent), #00d4aa);
-            color: white;
-            padding: 1rem;
-            cursor: pointer;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            transition: all 0.3s ease;
-        }
-
-        .chat-overlay-header:hover {
-            background: linear-gradient(135deg, #00a67c, #00b899);
-        }
-
-        .chat-overlay-title {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            font-weight: 600;
-            position: relative;
-        }
-
-        .chat-notification-dot {
-            position: absolute;
-            top: -5px;
-            right: -10px;
-            width: 12px;
-            height: 12px;
-            background: #ff4444;
-            border-radius: 50%;
-            border: 2px solid white;
-            animation: pulse-notification 2s infinite;
-        }
-
-        @keyframes pulse-notification {
-            0% {
-                box-shadow: 0 0 0 0 rgba(255, 68, 68, 0.7);
-            }
-            70% {
-                box-shadow: 0 0 0 10px rgba(255, 68, 68, 0);
-            }
-            100% {
-                box-shadow: 0 0 0 0 rgba(255, 68, 68, 0);
-            }
-        }
-
-        .chat-overlay-arrow {
-            transition: transform 0.3s ease;
-        }
-
-        .chat-overlay.expanded .chat-overlay-arrow {
-            transform: rotate(180deg);
-        }
-
-        .chat-overlay-content {
-            max-height: 0;
-            overflow: hidden;
-            transition: max-height 0.3s ease;
-        }
-
-        .chat-overlay.expanded .chat-overlay-content {
-            max-height: 300px;
-        }
-
-        .chat-conversations-list {
-            padding: 0;
-        }
-
-        .no-conversations {
-            text-align: center;
-            padding: 2rem 1rem;
-            color: var(--text-secondary);
-        }
-
-        .no-conversations i {
-            font-size: 2rem;
-            margin-bottom: 0.5rem;
-            opacity: 0.5;
-        }
-
-        .conversation-item {
-            padding: 1rem;
-            border-bottom: 1px solid var(--glass-border);
-            cursor: pointer;
-            transition: all 0.3s ease;
-            position: relative;
-        }
-
-        .conversation-item:hover {
-            background: rgba(255, 255, 255, 0.05);
-        }
-
-        .conversation-item:last-child {
-            border-bottom: none;
-        }
-
-        .conversation-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 0.5rem;
-        }
-
-        .conversation-title {
-            font-weight: 600;
-            color: var(--text-color);
-            font-size: 0.9rem;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-            max-width: 180px;
-        }
-
-        .conversation-time {
-            font-size: 0.7rem;
-            color: var(--text-secondary);
-        }
-
-        .conversation-preview {
-            font-size: 0.8rem;
-            color: var(--text-secondary);
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-        }
-
-        .conversation-unread {
-            position: absolute;
-            top: 50%;
-            right: 1rem;
-            transform: translateY(-50%);
-            width: 8px;
-            height: 8px;
-            background: #ff4444;
-            border-radius: 50%;
-        }
-
-        .conversation-item.has-unread {
-            background: rgba(0, 191, 166, 0.05);
-            border-left: 3px solid var(--primary-accent);
-        }
-
-        .conversation-item.has-unread .conversation-title {
-            color: var(--primary-accent);
-        }
-
         /* Filter Toolbar Styles */
         .filter-toolbar {
             background: rgba(255, 255, 255, 0.03);
@@ -1252,21 +620,6 @@
             border-radius: 16px;
         }
 
-        /* Chat Participant Counter */
-        .chat-participant-count {
-            background: linear-gradient(135deg, #ff9800, #f57c00);
-            color: white;
-            border-radius: 50%;
-            width: 20px;
-            height: 20px;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 0.7rem;
-            font-weight: 600;
-            margin-left: 0.25rem;
-        }
-
         /* File Upload Styles */
         .file-upload-area {
             border: 2px dashed var(--glass-border);
@@ -1356,36 +709,6 @@
             color: #ff4444;
         }
 
-        /* Code Block Styles for Chat */
-        .message-content code {
-            background: rgba(0, 0, 0, 0.3);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 4px;
-            padding: 0.25rem 0.5rem;
-            font-family: 'Courier New', monospace;
-            font-size: 0.85rem;
-            color: #00ff88;
-        }
-
-        .message-content pre {
-            background: rgba(0, 0, 0, 0.4);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 8px;
-            padding: 1rem;
-            margin: 0.5rem 0;
-            overflow-x: auto;
-            font-family: 'Courier New', monospace;
-            font-size: 0.85rem;
-            line-height: 1.4;
-        }
-
-        .message-content pre code {
-            background: none;
-            border: none;
-            padding: 0;
-            color: #00ff88;
-        }
-
         @media (max-width: 768px) {
             .page-container {
                 padding: 1rem;
@@ -1464,6 +787,337 @@
                 padding: 0.5rem 0;
             }
         }
+    /* Enhanced Typography */
+    h2 {
+        line-height: 1.3;
+        letter-spacing: -0.02em;
+    }
+    
+    p, .request-description {
+        line-height: 1.7;
+    }
+    
+    /* Validation Messages */
+    .validation-message {
+        font-size: 0.85rem;
+        margin-top: 0.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        opacity: 0;
+        transform: translateY(-10px);
+        transition: all 0.3s ease;
+        height: 0;
+        overflow: hidden;
+    }
+    
+    .validation-message.error {
+        color: #ff4444;
+        opacity: 1;
+        transform: translateY(0);
+        height: auto;
+    }
+    
+    .validation-message.success {
+        color: #00ca88;
+        opacity: 1;
+        transform: translateY(0);
+        height: auto;
+    }
+    
+    /* Due Date Quick Buttons */
+    .due-date-container {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    
+    .quick-date-buttons {
+        display: flex;
+        gap: 0.5rem;
+    }
+    
+    .quick-date-btn {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid var(--glass-border);
+        padding: 0.4rem 0.6rem;
+        border-radius: 6px;
+        font-size: 0.8rem;
+        color: var(--text-secondary);
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+    
+    .quick-date-btn:hover {
+        background: rgba(0, 191, 166, 0.1);
+        border-color: var(--primary-accent);
+        color: var(--text-color);
+    }
+    
+    /* Upload Progress Bar */
+    .upload-progress-container {
+        height: 8px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 4px;
+        margin: 0.75rem 0;
+        overflow: hidden;
+        position: relative;
+    }
+    
+    .upload-progress-bar {
+        height: 100%;
+        background: linear-gradient(90deg, var(--primary-accent), #00d4aa);
+        width: 0%;
+        transition: width 0.3s ease;
+        position: relative;
+    }
+    
+    .upload-progress-text {
+        position: absolute;
+        right: 0;
+        top: 10px;
+        font-size: 0.8rem;
+        color: var(--text-secondary);
+    }
+    
+    /* Active Filters */
+    .active-filters {
+        background: var(--glass-bg);
+        border-radius: 16px;
+        padding: 1.5rem;
+        margin-top: 1.5rem;
+        border: 1px solid var(--glass-border);
+        animation: fadeInUp 0.6s ease-out;
+    }
+    
+    .active-filters h3 {
+        font-size: 1.1rem;
+        margin-bottom: 1rem;
+        color: var(--primary-accent);
+    }
+    
+    #filter-badges {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        margin-bottom: 1rem;
+    }
+    
+    .filter-badge {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem 0.75rem;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 8px;
+        font-size: 0.85rem;
+    }
+    
+    .filter-badge i {
+        cursor: pointer;
+        transition: color 0.2s ease;
+    }
+    
+    .filter-badge i:hover {
+        color: #ff4444;
+    }
+    
+    .clear-filters-btn {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid var(--glass-border);
+        padding: 0.6rem 1rem;
+        border-radius: 8px;
+        color: var(--text-secondary);
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: all 0.3s ease;
+        font-size: 0.9rem;
+    }
+    
+    .clear-filters-btn:hover {
+        background: rgba(255, 68, 68, 0.1);
+        border-color: #ff4444;
+        color: #ff4444;
+    }
+    
+    /* Enhanced Payment Range Slider */
+    .payment-range-container {
+        width: 100%;
+    }
+    
+    .payment-range-label {
+        display: block;
+        margin-bottom: 0.5rem;
+        font-size: 0.9rem;
+    }
+    
+    #payment-range {
+        width: 100%;
+        height: 8px;
+        -webkit-appearance: none;
+        appearance: none;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 4px;
+        outline: none;
+    }
+    
+    #payment-range::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        background: var(--primary-accent);
+        cursor: pointer;
+        border: 2px solid white;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+    }
+    
+    #payment-range::-moz-range-thumb {
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        background: var(--primary-accent);
+        cursor: pointer;
+        border: 2px solid white;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+    }
+    
+    /* Enhanced Request Cards */
+    .request-card {
+        position: relative;
+        transition: transform 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+    }
+    
+    .request-card:hover {
+        transform: translateY(-3px) scale(1.01);
+        z-index: 10;
+    }
+    
+    .request-card .view-details-btn {
+        position: absolute;
+        bottom: 1.5rem;
+        right: 1.5rem;
+        background: var(--primary-accent);
+        color: white;
+        border: none;
+        padding: 0.6rem 1.2rem;
+        border-radius: 8px;
+        font-weight: 500;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: all 0.3s ease;
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    
+    .request-card:hover .view-details-btn {
+        opacity: 1;
+        transform: translateY(0);
+    }
+    
+    .request-card .urgency-indicator {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 3px;
+    }
+    
+    .urgency-low {
+        background: linear-gradient(90deg, #4CAF50, #8BC34A);
+    }
+    
+    .urgency-medium {
+        background: linear-gradient(90deg, #FFC107, #FF9800);
+    }
+    
+    .urgency-high {
+        background: linear-gradient(90deg, #FF5722, #F44336);
+    }
+    
+    /* Enhanced Filter Toolbar */
+    .filter-toolbar {
+        position: sticky;
+        top: 0;
+        z-index: 100;
+        margin-bottom: 1rem;
+    }
+    
+    .filter-tags {
+        background: rgba(255, 255, 255, 0.08);
+        border: 2px solid var(--glass-border);
+        border-radius: 8px;
+        padding: 0.5rem 0.75rem;
+        color: var(--text-color);
+        font-size: 0.9rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        width: 100%;
+    }
+    
+    .filter-tags:focus {
+        outline: none;
+        border-color: var(--primary-accent);
+    }
+    
+    .filter-group {
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+    }
+    
+    /* Empty State Enhancement */
+    .empty-state {
+        text-align: center;
+        padding: 5rem 1rem;
+        animation: fadeIn 0.6s ease-out;
+    }
+    
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+    
+    .empty-state i {
+        font-size: 4rem;
+        margin-bottom: 1rem;
+        color: var(--primary-accent);
+        opacity: 0.6;
+    }
+    
+    .empty-state h3 {
+        font-size: 1.5rem;
+        margin-bottom: 0.5rem;
+        color: var(--text-color);
+    }
+    
+    /* Improved Accessibility */
+    *:focus-visible {
+        outline: 2px solid var(--primary-accent);
+        outline-offset: 2px;
+    }
+    
+    /* ARIA-related styles */
+    [aria-hidden="true"] {
+        display: none;
+    }
+    
+    .sr-only {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+        border: 0;
+    }
     </style>
 </head>
 <body>
@@ -1487,74 +1141,113 @@
             <i class="ph-bold ph-warning-circle"></i>
             <span>Failed to post request. Please try again.</span>
         </div>
-
-        <div class="form-card">
-            <h2>
-                <i class="ph-bold ph-question"></i>
-                Need Help With an Assignment?
-            </h2>
-            <form id="new-request-form">
-                <div class="form-group">
-                    <label for="request-title">
-                        <i class="ph-bold ph-book"></i>
-                        Title / Course Name
-                    </label>
-                    <input type="text" id="request-title" placeholder="e.g., Data Structures Mid-Term Project" required>
-                </div>
-                <div class="form-group">
-                    <label for="request-description">
-                        <i class="ph-bold ph-chat-text"></i>
-                        Describe your problem
-                    </label>
-                    <textarea id="request-description" rows="5" placeholder="e.g., I'm stuck on implementing the binary search tree. Need help understanding the insertion logic..." required></textarea>
-                </div>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="payment-amount">
-                            <i class="ph-bold ph-currency-inr"></i>
-                            Payment Offer (Optional)
-                        </label>
-                        <input type="number" id="payment-amount" placeholder="e.g., 50" min="0" step="5">
-                        <small>Amount you're willing to pay for help (in INR)</small>
-                    </div>
-                    <div class="form-group">
-                        <label for="due-date">
-                            <i class="ph-bold ph-calendar"></i>
-                            Due Date
-                        </label>
-                        <input type="datetime-local" id="due-date" required>
-                        <small>When is your assignment due?</small>
-                    </div>
+        
+        <!-- Main content with two-column layout -->
+        <div class="main-content">
+            <!-- Form Column -->
+            <div class="form-column">
+                <div class="form-card">
+                    <h2>
+                        <i class="ph-bold ph-question"></i>
+                        Need Help With an Assignment?
+                    </h2>
+                    <form id="new-request-form">
+                        <div class="form-group">
+                            <label for="request-title">
+                                <i class="ph-bold ph-book"></i>
+                                Title / Course Name
+                            </label>
+                            <input type="text" id="request-title" placeholder="e.g., Data Structures Mid-Term Project" required>
+                            <div id="title-validation" class="validation-message"></div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="request-tags">
+                                <i class="ph-bold ph-tag"></i>
+                                Tags
+                            </label>
+                            <input type="text" id="request-tags" placeholder="e.g., Java, Algorithm, Database (comma separated)">
+                            <small>Add tags to help classmates find your request</small>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="request-description">
+                                <i class="ph-bold ph-chat-text"></i>
+                                Describe your problem
+                            </label>
+                            <textarea id="request-description" rows="5" placeholder="e.g., I'm stuck on implementing the binary search tree. Need help understanding the insertion logic..." required></textarea>
+                            <div id="description-validation" class="validation-message"></div>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="payment-amount">
+                                    <i class="ph-bold ph-currency-inr"></i>
+                                    Payment Offer (Optional)
+                                </label>
+                                <input type="number" id="payment-amount" placeholder="e.g., 50" min="0" step="5">
+                                <small>Amount you're willing to pay for help (in INR)</small>
+                            </div>
+                            <div class="form-group">
+                                <label for="due-date">
+                                    <i class="ph-bold ph-calendar"></i>
+                                    Due Date
+                                </label>
+                                <div class="due-date-container">
+                                    <input type="datetime-local" id="due-date" required>
+                                    <div class="quick-date-buttons">
+                                        <button type="button" class="quick-date-btn" data-days="1">Tomorrow</button>
+                                        <button type="button" class="quick-date-btn" data-days="2">In 2 days</button>
+                                        <button type="button" class="quick-date-btn" data-days="7">In a week</button>
+                                    </div>
+                                </div>
+                                <small>When is your assignment due?</small>
+                            </div>
+                        </div>
+                        
+                        <!-- File Upload Section -->
+                        <div class="form-group">
+                            <label>
+                                <i class="ph-bold ph-paperclip"></i>
+                                Attach Files (Optional)
+                            </label>
+                            <div class="file-upload-area" id="file-upload-area">
+                                <i class="ph-bold ph-cloud-arrow-up"></i>
+                                <p>Click to upload or drag and drop</p>
+                                <small>PDF, DOC, TXT, images up to 10MB each</small>
+                            </div>
+                            <input type="file" id="file-input" multiple accept=".pdf,.doc,.docx,.txt,.png,.jpg,.jpeg,.gif">
+                            <div id="upload-progress" class="upload-progress-container" style="display: none;">
+                                <div class="upload-progress-bar"></div>
+                                <div class="upload-progress-text">Uploading: 0%</div>
+                            </div>
+                            <div class="uploaded-files" id="uploaded-files"></div>
+                        </div>
+                        
+                        <button type="submit" class="btn-submit">
+                            <i class="ph-bold ph-paper-plane-right"></i>
+                            Post Request
+                            <span class="loading-spinner" id="submit-spinner" style="display: none;"></span>
+                        </button>
+                    </form>
                 </div>
                 
-                <!-- File Upload Section -->
-                <div class="form-group">
-                    <label>
-                        <i class="ph-bold ph-paperclip"></i>
-                        Attach Files (Optional)
-                    </label>
-                    <div class="file-upload-area" id="file-upload-area">
-                        <i class="ph-bold ph-cloud-arrow-up"></i>
-                        <p>Click to upload or drag and drop</p>
-                        <small>PDF, DOC, TXT, images up to 10MB each</small>
-                    </div>
-                    <input type="file" id="file-input" multiple accept=".pdf,.doc,.docx,.txt,.png,.jpg,.jpeg,.gif">
-                    <div class="uploaded-files" id="uploaded-files"></div>
+                <div class="active-filters" id="active-filters" style="display: none;">
+                    <h3>Active Filters</h3>
+                    <div id="filter-badges"></div>
+                    <button id="clear-filters" class="clear-filters-btn">
+                        <i class="ph-bold ph-x"></i> Clear All Filters
+                    </button>
                 </div>
-                
-                <button type="submit" class="btn-submit">
-                    <i class="ph-bold ph-paper-plane-right"></i>
-                    Post Request
-                    <span class="loading-spinner" style="display: none;"></span>
-                </button>
-            </form>
-        </div>
-
-        <div class="request-list">
-            <h2>
-                <i class="ph-bold ph-chats"></i>
-                Active Help Requests
-            </h2>
+            </div>
+            
+            <!-- List Column -->
+            <div class="list-column">
+                <div class="request-list">
+                    <h2>
+                        <i class="ph-bold ph-chats"></i>
+                        Active Help Requests
+                    </h2>
             
             <!-- Filter Toolbar -->
             <div class="filter-toolbar">
@@ -1563,23 +1256,45 @@
                     <input type="text" id="search-requests" placeholder="Search requests...">
                 </div>
                 <div class="toolbar-controls">
-                    <select id="sort-requests">
+                    <select id="sort-requests" aria-label="Sort requests">
                         <option value="newest">Sort by: Newest</option>
                         <option value="due_date">Sort by: Due Soon</option>
                         <option value="payment">Sort by: Highest Payment</option>
                         <option value="alphabetical">Sort by: A-Z</option>
                     </select>
-                    <label class="toggle-switch">
-                        <input type="checkbox" id="toggle-completed">
-                        <span class="toggle-slider"></span>
-                        <span class="toggle-label">Show Completed</span>
-                    </label>
-                    <label class="toggle-switch">
-                        <input type="checkbox" id="toggle-payment" checked>
-                        <span class="toggle-slider"></span>
-                        <span class="toggle-label">Has Payment</span>
-                    </label>
+                    
+                    <div class="filter-group">
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="toggle-completed">
+                            <span class="toggle-slider"></span>
+                            <span class="toggle-label">Show Completed</span>
+                        </label>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="toggle-payment" checked>
+                            <span class="toggle-slider"></span>
+                            <span class="toggle-label">Has Payment</span>
+                        </label>
+                    </div>
+                    
+                    <div class="payment-range-container">
+                        <label for="payment-range" class="payment-range-label">
+                            Payment Range: <span id="payment-range-value">₹0+</span>
+                        </label>
+                        <input type="range" id="payment-range" min="0" max="1000" step="50" value="0">
+                    </div>
+                    
+                    <div class="tag-filter-container">
+                        <select id="filter-tags" class="filter-tags" aria-label="Filter by tag">
+                            <option value="">Filter by tag</option>
+                        </select>
+                    </div>
                 </div>
+            </div>
+            
+            <div id="empty-state" class="empty-state" style="display: none;">
+                <i class="ph-bold ph-clipboard"></i>
+                <h3>No requests found</h3>
+                <p>Try adjusting your filters or create a new request</p>
             </div>
             
             <div id="requests-container">
@@ -1590,89 +1305,10 @@
                     <div class="skeleton-card"></div>
                 </div>
             </div>
-        </div>
-    </div>
-
-    <!-- Chat Overlay (Bottom Right) -->
-    <div id="chat-overlay" class="chat-overlay" style="display: none;">
-        <div class="chat-overlay-header">
-            <div class="chat-overlay-title">
-                <i class="ph-bold ph-chat-circle"></i>
-                <span>Messages</span>
-                <div class="chat-notification-dot" id="chat-notification-dot" style="display: none;"></div>
-            </div>
-            <i class="ph-bold ph-caret-down chat-overlay-arrow" id="chat-overlay-arrow"></i>
-        </div>
-        
-        <div class="chat-overlay-content" id="chat-overlay-content">
-            <div class="chat-conversations-list" id="chat-conversations-list">
-                <div class="no-conversations">
-                    <i class="ph-bold ph-chat-circle"></i>
-                    <p>No active conversations</p>
                 </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Chat Modal -->
-    <div id="chat-modal" class="chat-modal">
-        <div class="chat-modal-content">
-            <div class="chat-header">
-                <div class="chat-title">
-                    <h3 id="chat-request-title">Assignment Discussion</h3>
-                    <p id="chat-participants">Chat with...</p>
-                </div>
-                <button class="close-chat">>
-                    <i class="ph-bold ph-x"></i>
-                </button>
-            </div>
-            
-            <div class="chat-messages" id="chat-messages">
-                <!-- Messages will be loaded here -->
-                <div class="chat-loading">
-                    <div class="loading-spinner"></div>
-                    <p>Loading conversation...</p>
-                </div>
-            </div>
-            
-            <div class="chat-input-container">
-                <div class="chat-input-section">
-                    <textarea id="chat-input" placeholder="Type your message..." rows="2"></textarea>
-                    <div class="chat-controls">
-                        <button class="btn-make-offer" title="Make Price Offer" style="display: none;">
-                            <i class="ph-bold ph-currency-dollar"></i>
-                        </button>
-                        <button class="btn-attach-file" title="Attach File">
-                            <i class="ph-bold ph-paperclip"></i>
-                        </button>
-                        <button class="btn-send-message">>
-                            <i class="ph-bold ph-paper-plane-right"></i>
-                        </button>
-                    </div>
-                    <input type="file" id="chat-file-input" style="display: none;" multiple accept=".pdf,.doc,.docx,.txt,.png,.jpg,.jpeg,.gif">
-                </div>
-                
-                <div class="offer-input-section" id="offer-input-section" style="display: none;">
-                    <div class="offer-input-header">
-                        <span>Make a price offer for this assignment:</span>
-                        <button class="btn-cancel-offer">
-                            <i class="ph-bold ph-x"></i>
-                        </button>
-                    </div>
-                    <div class="offer-input-controls">
-                        <div class="offer-amount-input">
-                            <span class="currency-symbol">₹</span>
-                            <input type="number" id="offer-amount" placeholder="Enter amount" min="0" step="5">
-                        </div>
-                        <button class="btn-send-offer">
-                            <i class="ph-bold ph-handshake"></i>
-                            Send Offer
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
+            </div> <!-- End of list-column -->
+        </div> <!-- End of main-content -->
+    </div> <!-- End of page-container -->
 
     <script type="module" src="assign-help.js"></script>
 </body>

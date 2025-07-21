@@ -1,97 +1,39 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    
-    // === MARKET LISTINGS SECURITY ===
-    match /marketListings/{itemId} {
-      // Anyone can READ listings (public marketplace)
-      allow read: if true;
-      
-      // Only authenticated users can CREATE listings
-      allow create: if request.auth != null 
-                   && request.auth.uid == request.resource.data.sellerId;
-      
-      // Only the ORIGINAL SELLER can UPDATE their items (mark as sold, edit, etc.)
-      // This prevents users from marking other people's items as sold!
-      allow update: if request.auth != null 
-                   && request.auth.uid == resource.data.sellerId;
-      
-      // Only the ORIGINAL SELLER can DELETE their items
-      allow delete: if request.auth != null 
-                   && request.auth.uid == resource.data.sellerId;
+
+    function isSignedIn() {
+      return request.auth != null;
     }
-    
-    // === ASSIGNMENT HELP SECURITY ===
+
     match /assignmentRequests/{requestId} {
-      // Allow authenticated users to read all requests
-      allow read: if request.auth != null;
-      
-      // Only allow authenticated users to create requests with proper validation
-      allow create: if request.auth != null
-        && request.auth.uid != null
-        && request.resource.data.authorId == request.auth.uid  // User can only create requests as themselves
-        && request.resource.data.title is string
-        && request.resource.data.title.size() > 0
-        && request.resource.data.title.size() <= 100
-        && request.resource.data.description is string
-        && request.resource.data.description.size() > 0
-        && request.resource.data.description.size() <= 1000
-        && request.resource.data.authorName is string
-        && request.resource.data.authorName.size() <= 50
-        && request.resource.data.createdAt == request.time
-        && (request.resource.data.paymentAmount == null || 
-            (request.resource.data.paymentAmount is number && 
-             request.resource.data.paymentAmount >= 0 && 
-             request.resource.data.paymentAmount <= 100000));
-      
-      // CRITICAL: Only allow the author to update their own requests
-      allow update: if request.auth != null
-        && request.auth.uid == resource.data.authorId  // Must be the original author
-        && request.auth.uid == request.resource.data.authorId  // Prevent changing authorId
-        // Prevent modification of critical fields
-        && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['authorId', 'createdAt']);
-      
-      // Only allow the author to delete their own requests
-      allow delete: if request.auth != null
-        && request.auth.uid == resource.data.authorId;
+      allow read: if isSignedIn();
+
+      allow create: if isSignedIn()
+        && request.resource.data.authorId == request.auth.uid;
+
+      // Only the author can update a request
+      allow update: if isSignedIn() && resource.data.authorId == request.auth.uid;
+      allow delete: if false;
     }
-    
-    // === CHAT MESSAGES SECURITY ===
-    match /chatMessages/{messageId} {
-      // Allow authenticated users to read messages with proper access control
-      allow read: if request.auth != null
-        && (resource.data.senderId == request.auth.uid
-            || isAuthorOfRequest(resource.data.requestId, request.auth.uid));
-      
-      // Only allow authenticated users to create messages with validation
-      allow create: if request.auth != null
-        && request.auth.uid != null
-        && request.resource.data.senderId == request.auth.uid  // User can only send messages as themselves
-        && request.resource.data.content is string
-        && request.resource.data.content.size() > 0
-        && request.resource.data.content.size() <= 1000
-        && request.resource.data.senderName is string
-        && request.resource.data.senderName.size() <= 50
-        && request.resource.data.timestamp != null
-        && request.resource.data.requestId is string
-        && existsAfter(resource.data.requestId);  // Request must exist
+
+    // Rules for the marketplace listings
+    match /marketListings/{listingId} {
+      // Anyone who is signed in can read marketplace listings
+      allow read: if isSignedIn();
+
+      // Only signed-in users can create listings, and they must include their user ID
+      allow create: if isSignedIn()
+        && request.resource.data.sellerId == request.auth.uid
+        && request.resource.data.createdAt != null;
+
+      // Only the seller can update their listing
+      allow update: if isSignedIn() 
+        && resource.data.sellerId == request.auth.uid;
         
-      // Users can only delete their own messages within 5 minutes
-      allow delete: if request.auth != null
-        && request.auth.uid == resource.data.senderId
-        && request.time < resource.data.timestamp + duration.value(5, 'm');
-    }
-    
-    // Helper function to check if user is the author of a request
-    function isAuthorOfRequest(requestId, userId) {
-      return exists(/databases/$(database)/documents/assignmentRequests/$(requestId))
-        && get(/databases/$(database)/documents/assignmentRequests/$(requestId)).data.authorId == userId;
-    }
-    
-    // === DENY ALL OTHER COLLECTIONS ===
-    // This ensures we don't accidentally expose other data
-    match /{document=**} {
-      allow read, write: if false;
+      // Don't allow deletion for now - just mark as sold
+      allow delete: if false;
     }
   }
 }
+  
