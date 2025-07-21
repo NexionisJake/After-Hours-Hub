@@ -2,6 +2,14 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/fireba
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import { getFirestore, collection, addDoc, query, orderBy, onSnapshot, serverTimestamp, doc, updateDoc, where, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import { firebaseConfig } from './firebase-config.js';
+import { handleError, validateInput, requestRateLimit, messagingRateLimit } from './security-utils.js';
+
+// Import Firebase modules
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+import { getFirestore, collection, addDoc, query, orderBy, onSnapshot, doc, updateDoc, Timestamp, serverTimestamp, where } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+import { firebaseConfig } from './firebase-config.js';
+import { validateInput, requestRateLimit, messagingRateLimit } from './security-utils.js';
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
@@ -27,13 +35,29 @@ let lastReadMessages = new Map(); // Track last read message for each conversati
 let overlayMessagesListeners = new Map(); // Store message listeners for overlay
 let requestsListener = null; // Main requests listener
 let mutationObserver = null; // DOM mutation observer
+let allRequests = []; // Store all requests for filtering
+let uploadedFiles = new Map(); // Store uploaded files for new requests
+let chatUploadedFiles = new Map(); // Store uploaded files for chat
 
-// Security and utility functions
+// Security and utility functions with DOMPurify
 function sanitizeText(text) {
     if (!text) return '';
-    const div = document.createElement('div');
-    div.textContent = text.toString();
-    return div.innerHTML;
+    // Use DOMPurify for robust XSS protection
+    return DOMPurify.sanitize(text.toString(), { 
+        ALLOWED_TAGS: [],
+        ALLOWED_ATTR: [],
+        KEEP_CONTENT: true
+    });
+}
+
+function sanitizeHTML(html) {
+    if (!html) return '';
+    // Allow safe HTML tags for formatted content like code blocks
+    return DOMPurify.sanitize(html.toString(), {
+        ALLOWED_TAGS: ['code', 'pre', 'br', 'strong', 'em', 'p'],
+        ALLOWED_ATTR: [],
+        KEEP_CONTENT: true
+    });
 }
 
 function validatePaymentAmount(amount) {
@@ -42,10 +66,8 @@ function validatePaymentAmount(amount) {
     return !isNaN(numAmount) && numAmount >= 0 && numAmount <= 100000; // Reasonable limits
 }
 
-function validateInput(text, maxLength = 500) {
-    if (!text || typeof text !== 'string') return false;
-    return text.trim().length > 0 && text.length <= maxLength;
-}
+// Note: Enhanced validateInput is now imported from security-utils.js
+// This provides XSS protection, whitespace validation, and better error messages
 
 // Cleanup functions
 function cleanupAllListeners() {
@@ -213,9 +235,15 @@ async function toggleCompletion(docId, currentStatus) {
         });
         console.log('Completion status updated successfully');
     } catch (error) {
-        console.error('Error updating completion status:', error);
+        // SECURITY: Minimal error logging to prevent sensitive data exposure
+        console.error('Toggle completion failed');
+        
+        // Use centralized error handler for user feedback
+        const userMessage = handleError(error, 'toggleCompletion', true);
         showMessage(errorMessage);
-        errorMessage.querySelector('span').textContent = "Failed to update status. Please try again.";
+        if (errorMessage?.querySelector('span')) {
+            errorMessage.querySelector('span').textContent = userMessage;
+        }
     }
 }
 
@@ -326,10 +354,23 @@ async function loadChatMessages(requestId) {
         });
         
     } catch (error) {
-        console.error('Error loading messages:', error);
+        // Enhanced error handling for chat message loading
+        console.error(`Error in loadChatMessages function for requestId: ${requestId}:`, {
+            errorCode: error.code,
+            errorMessage: error.message,
+            requestId: requestId,
+            userId: currentUser?.uid,
+            timestamp: new Date().toISOString()
+        });
+        
+        const userMessage = handleError(error, 'loadChatMessages', false);
         chatMessages.innerHTML = `
             <div style="text-align: center; color: #ff6b6b; padding: 2rem;">
-                <p>Failed to load messages. Please try again.</p>
+                <i class="ph ph-warning-circle" style="font-size: 2rem; display: block; margin-bottom: 1rem;"></i>
+                <p>${userMessage}</p>
+                <button onclick="location.reload()" style="margin-top: 1rem; padding: 0.5rem 1rem; background: var(--primary); color: white; border: none; border-radius: 4px; cursor: pointer;">
+                    Retry
+                </button>
             </div>
         `;
     }
@@ -356,16 +397,18 @@ function createMessageElement(message) {
         contentHTML = `
             <div class="negotiation-content">
                 <i class="ph-bold ph-handshake"></i>
-                Price negotiation: ₹${sanitizedPrice}
+                Price negotiation: ₹${sanitizedPrice.toFixed(2)}
             </div>
         `;
     } else {
-        const sanitizedContent = sanitizeText(message.content || '');
-        contentHTML = `<div class="message-content">${sanitizedContent}</div>`;
+        // SECURITY: Format code blocks with XSS protection - formatCodeBlocks now handles sanitization
+        const safeContent = formatCodeBlocks(message.content || '');
+        contentHTML = `<div class="message-content">${safeContent}</div>`;
     }
     
+    // SECURITY: Sanitize all user-provided data
     const sanitizedSenderName = sanitizeText(message.senderName || 'Anonymous User');
-    const safeSenderPhoto = message.senderPhoto || 'https://via.placeholder.com/20';
+    const safeSenderPhoto = sanitizeText(message.senderPhoto || 'https://via.placeholder.com/20');
     
     messageEl.innerHTML = `
         ${!isCurrentUser ? `
@@ -375,10 +418,195 @@ function createMessageElement(message) {
             </div>
         ` : ''}
         ${contentHTML}
-        <div class="message-time">${timeStr}</div>
+        <div class="message-time">${sanitizeText(timeStr)}</div>
     `;
     
     return messageEl;
+}
+
+// Format code blocks in messages with XSS protection
+function formatCodeBlocks(text) {
+    if (!text) return '';
+    
+    // First sanitize the raw text to prevent XSS
+    const sanitizedText = sanitizeText(text);
+    
+    // Format multi-line code blocks (```code```)
+    let formattedText = sanitizedText.replace(/```([\s\S]*?)```/g, (match, code) => {
+        // Extra sanitization for code content
+        const safeCode = sanitizeText(code);
+        return `<pre><code>${safeCode}</code></pre>`;
+    });
+    
+    // Format inline code (`code`)
+    formattedText = formattedText.replace(/`([^`]+)`/g, (match, code) => {
+        // Extra sanitization for inline code
+        const safeCode = sanitizeText(code);
+        return `<code>${safeCode}</code>`;
+    });
+    
+    // Convert line breaks to HTML (safe since we sanitized first)
+    formattedText = formattedText.replace(/\n/g, '<br>');
+    
+    // Final sanitization allowing only safe HTML tags we just added
+    return sanitizeHTML(formattedText);
+}
+
+// File Upload Functions
+function setupFileUpload() {
+    const fileUploadArea = document.getElementById('file-upload-area');
+    const fileInput = document.getElementById('file-input');
+    const uploadedFilesContainer = document.getElementById('uploaded-files');
+
+    if (!fileUploadArea || !fileInput) return;
+
+    // Click to upload
+    fileUploadArea.addEventListener('click', () => {
+        fileInput.click();
+    });
+
+    // Drag and drop
+    fileUploadArea.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        fileUploadArea.classList.add('dragover');
+    });
+
+    fileUploadArea.addEventListener('dragleave', (e) => {
+        e.preventDefault();
+        fileUploadArea.classList.remove('dragover');
+    });
+
+    fileUploadArea.addEventListener('drop', (e) => {
+        e.preventDefault();
+        fileUploadArea.classList.remove('dragover');
+        handleFiles(e.dataTransfer.files);
+    });
+
+    // File input change
+    fileInput.addEventListener('change', (e) => {
+        handleFiles(e.target.files);
+    });
+
+    function handleFiles(files) {
+        Array.from(files).forEach(file => {
+            if (validateFile(file)) {
+                addFileToUpload(file, uploadedFilesContainer, uploadedFiles);
+            }
+        });
+    }
+}
+
+function setupChatFileUpload() {
+    const chatFileInput = document.getElementById('chat-file-input');
+    const attachFileBtn = document.querySelector('.btn-attach-file');
+
+    if (!chatFileInput || !attachFileBtn) return;
+
+    attachFileBtn.addEventListener('click', () => {
+        chatFileInput.click();
+    });
+
+    chatFileInput.addEventListener('change', (e) => {
+        Array.from(e.target.files).forEach(file => {
+            if (validateFile(file)) {
+                // For chat, we'll send files immediately
+                sendFileMessage(file);
+            }
+        });
+        // Clear the input
+        e.target.value = '';
+    });
+}
+
+function validateFile(file) {
+    const maxSize = 10 * 1024 * 1024; // 10MB
+    const allowedTypes = [
+        'application/pdf',
+        'application/msword',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'text/plain',
+        'image/png',
+        'image/jpeg',
+        'image/gif',
+        'image/jpg'
+    ];
+
+    if (file.size > maxSize) {
+        alert(`File "${file.name}" is too large. Maximum size is 10MB.`);
+        return false;
+    }
+
+    if (!allowedTypes.includes(file.type)) {
+        alert(`File type "${file.type}" is not allowed.`);
+        return false;
+    }
+
+    return true;
+}
+
+function addFileToUpload(file, container, storage) {
+    const fileId = Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+    storage.set(fileId, file);
+
+    const fileElement = document.createElement('div');
+    fileElement.className = 'uploaded-file';
+    fileElement.innerHTML = `
+        <i class="ph-bold ph-file"></i>
+        <div class="file-info">
+            <div class="file-name">${sanitizeText(file.name)}</div>
+            <div class="file-size">${formatFileSize(file.size)}</div>
+        </div>
+        <button class="btn-remove-file" data-file-id="${fileId}">
+            <i class="ph-bold ph-x"></i>
+        </button>
+    `;
+
+    const removeBtn = fileElement.querySelector('.btn-remove-file');
+    removeBtn.addEventListener('click', () => {
+        storage.delete(fileId);
+        fileElement.remove();
+    });
+
+    container.appendChild(fileElement);
+}
+
+function formatFileSize(bytes) {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+}
+
+async function sendFileMessage(file) {
+    if (!currentChatRequestId || !currentUser) {
+        console.error('Cannot send file: missing chat context');
+        return;
+    }
+
+    try {
+        // Create a simple text message about the file
+        // Note: For production, you'd upload to Firebase Storage first
+        const fileMessage = {
+            requestId: currentChatRequestId,
+            senderId: currentUser.uid,
+            senderName: sanitizeText(currentUser.displayName) || 'Anonymous User',
+            senderPhoto: currentUser.photoURL || 'https://via.placeholder.com/40',
+            content: `📎 Shared file: ${file.name} (${formatFileSize(file.size)})`,
+            timestamp: serverTimestamp(),
+            isFile: true,
+            fileName: file.name,
+            fileSize: file.size,
+            supervisorVisible: true
+        };
+
+        await addDoc(collection(db, "chatMessages"), fileMessage);
+        console.log('File message sent successfully');
+        
+    } catch (error) {
+        console.error('Error sending file message:', error);
+        alert('Failed to send file. Please try again.');
+    }
 }
 
 async function sendMessage() {
@@ -389,32 +617,45 @@ async function sendMessage() {
         return;
     }
     
-    // Validate input
-    if (!validateInput(content, 1000)) {
+    // SECURITY: Check rate limiting for messaging
+    if (!messagingRateLimit(currentUser.uid)) {
         showMessage(errorMessage);
-        errorMessage.querySelector('span').textContent = "Message is too long or contains invalid characters.";
+        if (errorMessage?.querySelector('span')) {
+            errorMessage.querySelector('span').textContent = "You're sending messages too quickly. Please wait a moment.";
+        }
         return;
     }
     
-    // Sanitize content before storing
-    const sanitizedContent = content; // Store original for Firebase, sanitize on display
+    // Enhanced validation with detailed error messages
+    const validation = validateInput(content, 1000);
+    if (!validation.isValid) {
+        showMessage(errorMessage);
+        if (errorMessage?.querySelector('span')) {
+            errorMessage.querySelector('span').textContent = validation.error;
+        }
+        return;
+    }
+    
+    // SECURITY: Store sanitized content to prevent XSS at source
+    const sanitizedContent = sanitizeText(content);
     
     try {
         await addDoc(collection(db, "chatMessages"), {
             requestId: currentChatRequestId,
             senderId: currentUser.uid,
             senderName: sanitizeText(currentUser.displayName) || 'Anonymous User',
-            senderPhoto: currentUser.photoURL || 'https://via.placeholder.com/40',
+            senderPhoto: sanitizeText(currentUser.photoURL) || 'https://via.placeholder.com/40',
             content: sanitizedContent,
             isNegotiation: false,
-            timestamp: serverTimestamp(),
+            timestamp: Timestamp.now(),
             supervisorVisible: true
         });
         
         chatInput.value = '';
         
     } catch (error) {
-        console.error('Error sending message:', error);
+        // SECURITY: Minimize error exposure in console logs
+        console.error('Error sending message');
         showMessage(errorMessage);
         errorMessage.querySelector('span').textContent = "Failed to send message. Please try again.";
     }
@@ -432,8 +673,13 @@ function cancelNegotiation() {
     const negotiationSection = document.getElementById('price-negotiation');
     const negotiatedPriceInput = document.getElementById('negotiated-price');
     
-    negotiationSection.style.display = 'none';
-    negotiatedPriceInput.value = '';
+    if (negotiationSection) {
+        negotiationSection.style.display = 'none';
+    }
+    
+    if (negotiatedPriceInput) {
+        negotiatedPriceInput.value = '';
+    }
 }
 
 async function sendNegotiation() {
@@ -683,7 +929,7 @@ function updateChatOverlayDisplay() {
         
         conversationsHTML += `
             <div class="conversation-item ${hasUnread ? 'has-unread' : ''}" 
-                 onclick="openConversationFromOverlay('${conversation.requestId}')">
+                 data-request-id="${conversation.requestId}">
                 <div class="conversation-header">
                     <div class="conversation-title">${conversation.title}</div>
                     <div class="conversation-time">${lastMessageTime}</div>
@@ -695,6 +941,15 @@ function updateChatOverlayDisplay() {
     });
     
     conversationsList.innerHTML = conversationsHTML;
+    
+    // Add event listeners to conversation items
+    const conversationItems = conversationsList.querySelectorAll('.conversation-item');
+    conversationItems.forEach(item => {
+        const requestId = item.getAttribute('data-request-id');
+        if (requestId) {
+            item.addEventListener('click', () => openConversationFromOverlay(requestId));
+        }
+    });
     
     // Show/hide notification dot
     if (totalUnread > 0) {
@@ -735,7 +990,8 @@ function markConversationAsRead(requestId) {
 onAuthStateChanged(auth, (user) => {
     if (user) {
         currentUser = user;
-        console.log('User authenticated:', user.email);
+        // SECURITY: Minimize sensitive data in console logs
+        console.log('User authenticated successfully');
         
         // Initialize chat overlay when user is authenticated
         setTimeout(() => {
@@ -770,21 +1026,29 @@ if (newRequestForm) {
             return;
         }
 
+        // SECURITY: Check rate limiting before processing
+        if (!requestRateLimit(currentUser.uid)) {
+            setErrorMessage("You're posting too frequently. Please wait a moment before creating another request.");
+            return;
+        }
+
         const title = newRequestForm['request-title']?.value?.trim();
         const description = newRequestForm['request-description']?.value?.trim();
         const paymentAmount = parseFloat(newRequestForm['payment-amount']?.value) || null;
         const dueDate = newRequestForm['due-date']?.value;
 
-    // Enhanced validation
-    if (!validateInput(title, 100)) {
+    // Enhanced validation with detailed error feedback
+    const titleValidation = validateInput(title, 100);
+    if (!titleValidation.isValid) {
         showMessage(errorMessage);
-        errorMessage.querySelector('span').textContent = "Please enter a valid title (1-100 characters).";
+        errorMessage.querySelector('span').textContent = `Title: ${titleValidation.error}`;
         return;
     }
     
-    if (!validateInput(description, 1000)) {
+    const descValidation = validateInput(description, 1000);
+    if (!descValidation.isValid) {
         showMessage(errorMessage);
-        errorMessage.querySelector('span').textContent = "Please enter a valid description (1-1000 characters).";
+        errorMessage.querySelector('span').textContent = `Description: ${descValidation.error}`;
         return;
     }
     
@@ -847,102 +1111,243 @@ if (newRequestForm) {
 // === READ: Fetch and display requests from Firestore in real-time ===
 function loadRequests() {
     if (requestsListener) {
-        // Clean up existing listener
         requestsListener();
+        requestsListener = null;
     }
     
     const q = query(collection(db, "assignmentRequests"), orderBy("createdAt", "desc"));
     requestsListener = onSnapshot(q, (querySnapshot) => {
-        // Clear existing requests
-        requestsContainer.innerHTML = '';
-        
-        if (querySnapshot.empty) {
-            requestsContainer.innerHTML = createEmptyState();
-            return;
+        try {
+            // Hide skeleton loader
+            const skeletonLoader = document.getElementById('skeleton-loader');
+            if (skeletonLoader) {
+                skeletonLoader.classList.add('hidden');
+            }
+            
+            // Clear existing requests and store all data
+            allRequests = [];
+            querySnapshot.forEach((doc) => {
+                allRequests.push({ id: doc.id, data: doc.data() });
+                requestsData.set(doc.id, doc.data());
+            });
+
+            // Apply current filters
+            applyFilters();
+            
+        } catch (error) {
+            console.error('Error in loadRequests listener:', error);
+            handleError(error, 'loadRequests', false);
+        }
+    }, (error) => {
+        console.error('Error loading requests:', error);
+        const skeletonLoader = document.getElementById('skeleton-loader');
+        if (skeletonLoader) {
+            skeletonLoader.classList.add('hidden');
+        }
+        displayEmptyState('Failed to load requests. Please refresh the page.');
+    });
+}
+
+// Filter and Search Functions
+function applyFilters() {
+    const searchTerm = document.getElementById('search-requests')?.value.toLowerCase() || '';
+    const sortBy = document.getElementById('sort-requests')?.value || 'newest';
+    const showCompleted = document.getElementById('toggle-completed')?.checked || false;
+    const hasPayment = document.getElementById('toggle-payment')?.checked || false;
+
+    // Filter requests
+    let filteredRequests = allRequests.filter(({ data }) => {
+        // Search filter
+        if (searchTerm) {
+            const title = (data.title || '').toLowerCase();
+            const description = (data.description || '').toLowerCase();
+            const authorName = (data.authorName || '').toLowerCase();
+            
+            if (!title.includes(searchTerm) && 
+                !description.includes(searchTerm) && 
+                !authorName.includes(searchTerm)) {
+                return false;
+            }
         }
 
-        let animationDelay = 0;
-    
-    querySnapshot.forEach((doc) => {
-        const request = doc.data();
-        const docId = doc.id;
-        
-        // Store request data for easy access
-        requestsData.set(docId, request);
-        
-        const requestEl = document.createElement('article');
-        requestEl.className = 'request-card';
-        
-        // Add staggered animation delay
-        requestEl.style.animationDelay = `${animationDelay}s`;
-        animationDelay += 0.1;
+        // Completion filter
+        if (!showCompleted && data.isCompleted) {
+            return false;
+        }
 
-        // Format the timestamp with better time display
-        const date = request.createdAt ? formatTimeAgo(request.createdAt.toDate()) : 'Just now';
-        
-        // Safely handle missing data
-        const authorName = request.authorName || 'Anonymous User';
-        const authorPhoto = request.authorPhotoURL || 'https://via.placeholder.com/40';
-        const title = request.title || 'Untitled Request';
-        const description = request.description || 'No description provided.';
-        const isCompleted = request.isCompleted || false;
-        const isAuthor = currentUser && currentUser.uid === request.authorId;
+        // Payment filter
+        if (hasPayment && (!data.paymentAmount || data.paymentAmount <= 0)) {
+            return false;
+        }
 
-        // Create badges for payment, due date, and completion status
-        const badgesHTML = createBadges(request);
-
-        // Create completion toggle button (only for the author)
-        const completionToggleHTML = isAuthor ? `
-            <button class="completion-toggle ${isCompleted ? 'completed' : ''}" 
-                    onclick="toggleRequestCompletion('${docId}', ${isCompleted})">
-                <i class="ph-bold ${isCompleted ? 'ph-check-circle' : 'ph-circle'}"></i>
-                ${isCompleted ? 'Mark as Open' : 'Mark as Completed'}
-            </button>
-        ` : '';
-
-        // Create contact button (for non-authors and non-completed requests)
-        const contactButtonHTML = !isAuthor && !isCompleted ? `
-            <button class="contact-button" onclick="openChat('${docId}')">
-                <i class="ph-bold ph-chat-circle"></i>
-                Contact & Negotiate
-            </button>
-        ` : '';
-
-        requestEl.innerHTML = `
-            <div class="request-author">
-                <img src="${authorPhoto}" alt="${authorName}" onerror="this.src='https://via.placeholder.com/40'">
-                <span>${authorName}</span>
-            </div>
-            <h3>${title}</h3>
-            <p class="request-description">${description}</p>
-            ${badgesHTML}
-            <p class="request-meta">
-                <i class="ph-bold ph-clock"></i>
-                Posted ${date}
-            </p>
-            ${completionToggleHTML}
-            ${contactButtonHTML}
-        `;
-        
-        // Add click interaction for future expansion (like comments)
-        requestEl.addEventListener('click', (e) => {
-            // Don't trigger if clicking on the completion toggle button
-            if (!e.target.closest('.completion-toggle')) {
-                console.log('Request clicked:', docId);
-                // Future: Could expand to show comments or contact options
-            }
-        });
-        
-        requestsContainer.appendChild(requestEl);
+        return true;
     });
-}, (error) => {
-    console.error('Error loading requests:', error);
+
+    // Sort requests
+    filteredRequests.sort((a, b) => {
+        switch (sortBy) {
+            case 'due_date':
+                const dueDateA = a.data.dueDate ? a.data.dueDate.toDate() : new Date(8640000000000000);
+                const dueDateB = b.data.dueDate ? b.data.dueDate.toDate() : new Date(8640000000000000);
+                return dueDateA - dueDateB;
+            
+            case 'payment':
+                const paymentA = a.data.paymentAmount || 0;
+                const paymentB = b.data.paymentAmount || 0;
+                return paymentB - paymentA;
+            
+            case 'alphabetical':
+                const titleA = (a.data.title || '').toLowerCase();
+                const titleB = (b.data.title || '').toLowerCase();
+                return titleA.localeCompare(titleB);
+            
+            case 'newest':
+            default:
+                const timeA = a.data.createdAt ? a.data.createdAt.toDate() : new Date(0);
+                const timeB = b.data.createdAt ? b.data.createdAt.toDate() : new Date(0);
+                return timeB - timeA;
+        }
+    });
+
+    displayFilteredRequests(filteredRequests);
+}
+
+function displayFilteredRequests(filteredRequests) {
+    const requestsContainer = document.getElementById('requests-container');
+    
+    if (filteredRequests.length === 0) {
+        displayEmptyState(getEmptyStateMessage());
+        return;
+    }
+
+    // Fragment for better performance
+    const fragment = document.createDocumentFragment();
+    
+    filteredRequests.forEach(({ id, data }, index) => {
+        const animationDelay = index * 0.1;
+        const requestEl = createRequestElement({ id, data: () => data }, data, animationDelay);
+        fragment.appendChild(requestEl);
+    });
+
+    requestsContainer.innerHTML = '';
+    requestsContainer.appendChild(fragment);
+}
+
+function getEmptyStateMessage() {
+    const searchTerm = document.getElementById('search-requests')?.value || '';
+    const showCompleted = document.getElementById('toggle-completed')?.checked || false;
+    const hasPayment = document.getElementById('toggle-payment')?.checked || false;
+
+    if (searchTerm) {
+        return `No requests found matching "${searchTerm}"`;
+    }
+
+    if (!showCompleted && hasPayment) {
+        return 'No active paid requests found. Try adjusting filters.';
+    }
+
+    if (hasPayment) {
+        return 'No paid requests found. Try disabling payment filter.';
+    }
+
+    return 'No help requests found. Be the first to ask for help!';
+}
+
+function displayEmptyState(message) {
+    const requestsContainer = document.getElementById('requests-container');
     requestsContainer.innerHTML = `
-        <div style="text-align: center; color: #ff6b6b; padding: 2rem;">
-            <p>Failed to load requests. Please refresh the page.</p>
+        <div class="empty-state">
+            <i class="ph-bold ph-chat-circle"></i>
+            <p>${message}</p>
         </div>
     `;
-});
+}
+
+// PERFORMANCE OPTIMIZATION: Extract request element creation for better maintainability
+function createRequestElement(doc, request, animationDelay) {
+    const docId = doc.id;
+    const requestEl = document.createElement('article');
+    const isCompleted = request.isCompleted || false;
+    requestEl.className = `request-card ${isCompleted ? 'completed' : ''}`;
+    
+    // Add staggered animation delay
+    requestEl.style.animationDelay = `${animationDelay}s`;
+
+    // Format the timestamp with better time display
+    const date = request.createdAt ? formatTimeAgo(request.createdAt.toDate()) : 'Just now';
+    
+    // SECURITY: Sanitize ALL user-provided content to prevent XSS
+    const authorName = sanitizeText(request.authorName || 'Anonymous User');
+    const authorPhoto = request.authorPhotoURL || 'https://via.placeholder.com/40';
+    const title = sanitizeText(request.title || 'Untitled Request');
+    const description = sanitizeText(request.description || 'No description provided.');
+    const isAuthor = currentUser && currentUser.uid === request.authorId;
+
+    // Get participant count (mock for now - can be enhanced with real data)
+    const participantCount = Math.floor(Math.random() * 8) + 1; // Mock data
+
+    // Create badges for payment, due date, and completion status
+    const badgesHTML = createBadges(request);
+
+    // Create completion toggle button (only for the author)
+    const completionToggleHTML = isAuthor ? `
+        <button class="completion-toggle ${isCompleted ? 'completed' : ''}" 
+                title="${isCompleted ? 'Mark as incomplete' : 'Mark as completed'}">
+            <i class="ph ${isCompleted ? 'ph-check-circle-fill' : 'ph-circle'}"></i>
+            ${isCompleted ? 'Completed' : 'Mark Complete'}
+        </button>
+    ` : '';
+
+    // Use secure DOM creation with sanitized content
+    requestEl.innerHTML = `
+        <div class="request-header">
+            <img src="${sanitizeText(authorPhoto)}" alt="${authorName}" class="author-avatar" onerror="this.src='https://via.placeholder.com/40'">
+            <div class="author-info">
+                <span class="author-name">${authorName}</span>
+                <span class="post-date">${sanitizeText(date)}</span>
+            </div>
+            ${completionToggleHTML}
+        </div>
+        
+        <div class="request-content ${isCompleted ? 'completed' : ''}">
+            <h3 class="request-title">${title}</h3>
+            <p class="request-description">${description}</p>
+            ${badgesHTML}
+        </div>
+        
+        <div class="request-actions">
+            <button class="btn-secondary btn-chat" data-request-id="${sanitizeText(docId)}">
+                <i class="ph ph-chat-circle"></i>
+                Chat
+                <span class="chat-participant-count">${participantCount}</span>
+            </button>
+        </div>
+    `;
+
+    // Add secure event listeners instead of onclick
+    const completionToggle = requestEl.querySelector('.completion-toggle');
+    if (completionToggle) {
+        completionToggle.addEventListener('click', () => {
+            toggleCompletion(docId, isCompleted);
+        });
+    }
+
+    const chatButton = requestEl.querySelector('.btn-chat');
+    if (chatButton) {
+        chatButton.addEventListener('click', () => {
+            openChatModal(docId, request);
+        });
+    }
+
+    // Add click interaction for future expansion
+    requestEl.addEventListener('click', (e) => {
+        if (!e.target.closest('.completion-toggle, .btn-chat')) {
+            console.log('Request clicked:', docId);
+            // Future: Could expand to show comments or contact options
+        }
+    });
+
+    return requestEl;
 }
 
 // Initialize requests loading when DOM is ready
@@ -1073,6 +1478,102 @@ document.addEventListener('keydown', (e) => {
 });
 
 // Add auto-resize functionality for chat input
+// Offer Input Functions
+function showOfferInput() {
+    const offerInputSection = document.getElementById('offer-input-section');
+    const makeOfferBtn = document.querySelector('.btn-make-offer');
+    
+    if (offerInputSection) {
+        offerInputSection.style.display = 'block';
+    }
+    
+    if (makeOfferBtn) {
+        makeOfferBtn.style.display = 'none';
+    }
+    
+    // Focus on the amount input
+    setTimeout(() => {
+        const offerAmountInput = document.getElementById('offer-amount');
+        if (offerAmountInput) {
+            offerAmountInput.focus();
+        }
+    }, 100);
+}
+
+function hideOfferInput() {
+    const offerInputSection = document.getElementById('offer-input-section');
+    const makeOfferBtn = document.querySelector('.btn-make-offer');
+    const offerAmountInput = document.getElementById('offer-amount');
+    
+    if (offerInputSection) {
+        offerInputSection.style.display = 'none';
+    }
+    
+    if (makeOfferBtn) {
+        makeOfferBtn.style.display = 'block';
+    }
+    
+    if (offerAmountInput) {
+        offerAmountInput.value = '';
+    }
+}
+
+async function sendOffer() {
+    const offerAmountInput = document.getElementById('offer-amount');
+    const sendOfferBtn = document.querySelector('.btn-send-offer');
+    
+    if (!offerAmountInput || !currentChatRequestId || !currentUser) {
+        console.error('Missing required elements or data for sending offer');
+        return;
+    }
+    
+    const offerAmount = parseFloat(offerAmountInput.value);
+    
+    if (!offerAmount || offerAmount <= 0) {
+        alert('Please enter a valid offer amount');
+        return;
+    }
+    
+    // Disable button during sending
+    if (sendOfferBtn) {
+        sendOfferBtn.disabled = true;
+        sendOfferBtn.innerHTML = '<div class="loading-spinner"></div> Sending...';
+    }
+    
+    try {
+        // Create offer message
+        const offerMessage = {
+            requestId: currentChatRequestId,
+            senderId: currentUser.uid,
+            senderName: currentUser.displayName || currentUser.email,
+            senderEmail: currentUser.email,
+            content: `Price offer: ₹${offerAmount}`,
+            timestamp: serverTimestamp(),
+            type: 'offer',
+            offerAmount: offerAmount,
+            offerStatus: 'pending'
+        };
+        
+        // Add message to Firestore
+        await addDoc(collection(db, "chatMessages"), offerMessage);
+        
+        // Hide offer input
+        hideOfferInput();
+        
+        console.log('✅ Offer sent successfully');
+        
+    } catch (error) {
+        console.error('❌ Error sending offer:', error);
+        alert('Failed to send offer. Please try again.');
+    } finally {
+        // Re-enable button
+        if (sendOfferBtn) {
+            sendOfferBtn.disabled = false;
+            sendOfferBtn.innerHTML = '<i class="ph-bold ph-handshake"></i> Send Offer';
+        }
+    }
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     const chatInput = document.getElementById('chat-input');
     if (chatInput) {
@@ -1089,4 +1590,47 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
+
+    // Set up offer button event listeners
+    const makeOfferBtn = document.querySelector('.btn-make-offer');
+    const cancelOfferBtn = document.querySelector('.btn-cancel-offer');
+    const sendOfferBtn = document.querySelector('.btn-send-offer');
+
+    if (makeOfferBtn) {
+        makeOfferBtn.addEventListener('click', showOfferInput);
+    }
+
+    if (cancelOfferBtn) {
+        cancelOfferBtn.addEventListener('click', hideOfferInput);
+    }
+
+    if (sendOfferBtn) {
+        sendOfferBtn.addEventListener('click', sendOffer);
+    }
+
+    // Set up filter controls
+    const searchInput = document.getElementById('search-requests');
+    const sortSelect = document.getElementById('sort-requests');
+    const completedToggle = document.getElementById('toggle-completed');
+    const paymentToggle = document.getElementById('toggle-payment');
+
+    if (searchInput) {
+        searchInput.addEventListener('input', applyFilters);
+    }
+
+    if (sortSelect) {
+        sortSelect.addEventListener('change', applyFilters);
+    }
+
+    if (completedToggle) {
+        completedToggle.addEventListener('change', applyFilters);
+    }
+
+    if (paymentToggle) {
+        paymentToggle.addEventListener('change', applyFilters);
+    }
+
+    // Set up file upload functionality
+    setupFileUpload();
+    setupChatFileUpload();
 });

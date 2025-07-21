@@ -3,9 +3,8 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import { getFirestore, collection, addDoc, query, orderBy, onSnapshot, serverTimestamp, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-
-// Import centralized configuration (Security Improvement)
 import { firebaseConfig, cloudinaryConfig } from './firebase-config.js';
+import { handleError, validateInput, requestRateLimit } from './security-utils.js';
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
@@ -312,6 +311,25 @@ onSnapshot(q, (querySnapshot) => {
     
     // Apply current filter
     filterItems(currentFilter);
+    marketLoading.style.display = 'none';
+}, (error) => {
+    // Enhanced error handling for market items loading
+    console.error('Error in market items onSnapshot:', {
+        errorCode: error.code,
+        errorMessage: error.message,
+        timestamp: new Date().toISOString()
+    });
+    
+    const userMessage = handleError(error, 'marketItemsLoading', false);
+    marketContainer.innerHTML = `
+        <div style="grid-column: 1 / -1; text-align: center; color: #ff6b6b; padding: 2rem;">
+            <i class="ph ph-warning-circle" style="font-size: 2rem; display: block; margin-bottom: 1rem;"></i>
+            <p>${userMessage}</p>
+            <button onclick="location.reload()" style="margin-top: 1rem; padding: 0.5rem 1rem; background: var(--primary); color: white; border: none; border-radius: 4px; cursor: pointer;">
+                Refresh Page
+            </button>
+        </div>
+    `;
     marketLoading.style.display = 'none';
 });
 

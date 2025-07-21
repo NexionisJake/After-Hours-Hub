@@ -6,6 +6,7 @@
     <title>Assignment Help - After Hours Hub</title>
     <link rel="stylesheet" href="dashboard-styles.css">
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dompurify@3.0.5/dist/purify.min.js"></script>
     <style>
         /* Enhanced Assignment Help Page Styles */
         .page-container {
@@ -218,6 +219,20 @@
         .request-card {
             animation: slideInLeft 0.5s ease-out;
             margin-bottom: 1.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .request-card.completed {
+            opacity: 0.6;
+            transition: all 0.3s ease;
+        }
+
+        .request-card.completed:hover {
+            opacity: 1;
+        }
+
+        .request-card.hidden {
+            display: none;
         }
 
         @keyframes slideInLeft {
@@ -761,6 +776,7 @@
         }
 
         .btn-make-offer,
+        .btn-attach-file,
         .btn-send-message {
             background: var(--primary-accent);
             color: white;
@@ -775,9 +791,18 @@
         }
 
         .btn-make-offer:hover,
+        .btn-attach-file:hover,
         .btn-send-message:hover {
             transform: translateY(-2px);
             box-shadow: 0 4px 12px rgba(0, 191, 166, 0.4);
+        }
+
+        .btn-attach-file {
+            background: linear-gradient(135deg, #9C27B0, #7B1FA2);
+        }
+
+        .btn-attach-file:hover {
+            box-shadow: 0 4px 12px rgba(156, 39, 176, 0.4);
         }
 
         .offer-input-section {
@@ -1049,6 +1074,318 @@
             color: var(--primary-accent);
         }
 
+        /* Filter Toolbar Styles */
+        .filter-toolbar {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .search-bar {
+            position: relative;
+            flex: 1;
+        }
+
+        .search-bar i {
+            position: absolute;
+            left: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-secondary);
+            z-index: 2;
+        }
+
+        .search-bar input {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.08);
+            border: 2px solid var(--glass-border);
+            border-radius: 12px;
+            padding: 0.75rem 1rem 0.75rem 2.5rem;
+            color: var(--text-color);
+            font-size: 0.95rem;
+            transition: all 0.3s ease;
+        }
+
+        .search-bar input:focus {
+            outline: none;
+            border-color: var(--primary-accent);
+            background: rgba(255, 255, 255, 0.12);
+            box-shadow: 0 0 0 4px rgba(0, 191, 166, 0.1);
+        }
+
+        .search-bar input::placeholder {
+            color: var(--text-secondary);
+        }
+
+        .toolbar-controls {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+            flex-wrap: wrap;
+        }
+
+        #sort-requests {
+            background: rgba(255, 255, 255, 0.08);
+            border: 2px solid var(--glass-border);
+            border-radius: 8px;
+            padding: 0.5rem 0.75rem;
+            color: var(--text-color);
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        #sort-requests:focus {
+            outline: none;
+            border-color: var(--primary-accent);
+        }
+
+        #sort-requests option {
+            background: var(--bg-color);
+            color: var(--text-color);
+        }
+
+        .toggle-switch {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            cursor: pointer;
+            font-size: 0.9rem;
+            color: var(--text-color);
+        }
+
+        .toggle-switch input[type="checkbox"] {
+            display: none;
+        }
+
+        .toggle-slider {
+            width: 44px;
+            height: 24px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+
+        .toggle-slider::before {
+            content: '';
+            position: absolute;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: var(--text-secondary);
+            top: 2px;
+            left: 2px;
+            transition: all 0.3s ease;
+        }
+
+        .toggle-switch input[type="checkbox"]:checked + .toggle-slider {
+            background: linear-gradient(135deg, var(--primary-accent), #00d4aa);
+            border-color: var(--primary-accent);
+        }
+
+        .toggle-switch input[type="checkbox"]:checked + .toggle-slider::before {
+            transform: translateX(20px);
+            background: white;
+        }
+
+        .toggle-label {
+            font-weight: 500;
+        }
+
+        /* Skeleton Loader Styles */
+        .skeleton-container {
+            display: block;
+        }
+
+        .skeleton-container.hidden {
+            display: none;
+        }
+
+        .skeleton-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 2.5rem;
+            margin-bottom: 1.5rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .skeleton-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+            animation: skeleton-loading 1.5s infinite;
+        }
+
+        @keyframes skeleton-loading {
+            0% { left: -100%; }
+            100% { left: 100%; }
+        }
+
+        .skeleton-card::after {
+            content: '';
+            position: absolute;
+            top: 1rem;
+            left: 1rem;
+            right: 1rem;
+            bottom: 1rem;
+            background: linear-gradient(
+                90deg,
+                rgba(255, 255, 255, 0.05) 25%,
+                rgba(255, 255, 255, 0.02) 50%,
+                rgba(255, 255, 255, 0.05) 75%
+            );
+            border-radius: 16px;
+        }
+
+        /* Chat Participant Counter */
+        .chat-participant-count {
+            background: linear-gradient(135deg, #ff9800, #f57c00);
+            color: white;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+            font-weight: 600;
+            margin-left: 0.25rem;
+        }
+
+        /* File Upload Styles */
+        .file-upload-area {
+            border: 2px dashed var(--glass-border);
+            border-radius: 12px;
+            padding: 1.5rem;
+            text-align: center;
+            margin-top: 1rem;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .file-upload-area:hover,
+        .file-upload-area.dragover {
+            border-color: var(--primary-accent);
+            background: rgba(0, 191, 166, 0.05);
+        }
+
+        .file-upload-area i {
+            font-size: 2rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.5rem;
+        }
+
+        .file-upload-area p {
+            color: var(--text-secondary);
+            margin: 0;
+            font-size: 0.9rem;
+        }
+
+        .file-upload-area small {
+            display: block;
+            color: var(--text-secondary);
+            opacity: 0.7;
+            margin-top: 0.25rem;
+        }
+
+        #file-input {
+            display: none;
+        }
+
+        .uploaded-files {
+            margin-top: 1rem;
+        }
+
+        .uploaded-file {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            margin-bottom: 0.5rem;
+        }
+
+        .uploaded-file i {
+            color: var(--primary-accent);
+        }
+
+        .file-info {
+            flex: 1;
+        }
+
+        .file-name {
+            color: var(--text-color);
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        .file-size {
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+        }
+
+        .btn-remove-file {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            padding: 0.25rem;
+            border-radius: 4px;
+            transition: all 0.3s ease;
+        }
+
+        .btn-remove-file:hover {
+            background: rgba(255, 68, 68, 0.2);
+            color: #ff4444;
+        }
+
+        /* Code Block Styles for Chat */
+        .message-content code {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+            padding: 0.25rem 0.5rem;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85rem;
+            color: #00ff88;
+        }
+
+        .message-content pre {
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 1rem;
+            margin: 0.5rem 0;
+            overflow-x: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85rem;
+            line-height: 1.4;
+        }
+
+        .message-content pre code {
+            background: none;
+            border: none;
+            padding: 0;
+            color: #00ff88;
+        }
+
         @media (max-width: 768px) {
             .page-container {
                 padding: 1rem;
@@ -1105,6 +1442,26 @@
                 width: 280px;
                 bottom: 10px;
                 right: 10px;
+            }
+
+            /* Mobile Filter Toolbar */
+            .filter-toolbar {
+                padding: 1rem;
+            }
+
+            .toolbar-controls {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 1rem;
+            }
+
+            #sort-requests {
+                width: 100%;
+            }
+
+            .toggle-switch {
+                justify-content: space-between;
+                padding: 0.5rem 0;
             }
         }
     </style>
@@ -1169,6 +1526,22 @@
                         <small>When is your assignment due?</small>
                     </div>
                 </div>
+                
+                <!-- File Upload Section -->
+                <div class="form-group">
+                    <label>
+                        <i class="ph-bold ph-paperclip"></i>
+                        Attach Files (Optional)
+                    </label>
+                    <div class="file-upload-area" id="file-upload-area">
+                        <i class="ph-bold ph-cloud-arrow-up"></i>
+                        <p>Click to upload or drag and drop</p>
+                        <small>PDF, DOC, TXT, images up to 10MB each</small>
+                    </div>
+                    <input type="file" id="file-input" multiple accept=".pdf,.doc,.docx,.txt,.png,.jpg,.jpeg,.gif">
+                    <div class="uploaded-files" id="uploaded-files"></div>
+                </div>
+                
                 <button type="submit" class="btn-submit">
                     <i class="ph-bold ph-paper-plane-right"></i>
                     Post Request
@@ -1182,10 +1555,39 @@
                 <i class="ph-bold ph-chats"></i>
                 Active Help Requests
             </h2>
+            
+            <!-- Filter Toolbar -->
+            <div class="filter-toolbar">
+                <div class="search-bar">
+                    <i class="ph-bold ph-magnifying-glass"></i>
+                    <input type="text" id="search-requests" placeholder="Search requests...">
+                </div>
+                <div class="toolbar-controls">
+                    <select id="sort-requests">
+                        <option value="newest">Sort by: Newest</option>
+                        <option value="due_date">Sort by: Due Soon</option>
+                        <option value="payment">Sort by: Highest Payment</option>
+                        <option value="alphabetical">Sort by: A-Z</option>
+                    </select>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="toggle-completed">
+                        <span class="toggle-slider"></span>
+                        <span class="toggle-label">Show Completed</span>
+                    </label>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="toggle-payment" checked>
+                        <span class="toggle-slider"></span>
+                        <span class="toggle-label">Has Payment</span>
+                    </label>
+                </div>
+            </div>
+            
             <div id="requests-container">
-                <div class="empty-state">
-                    <i class="ph-bold ph-chat-circle"></i>
-                    <p>No help requests yet. Be the first to ask for help!</p>
+                <!-- Skeleton Loaders -->
+                <div id="skeleton-loader" class="skeleton-container">
+                    <div class="skeleton-card"></div>
+                    <div class="skeleton-card"></div>
+                    <div class="skeleton-card"></div>
                 </div>
             </div>
         </div>
@@ -1237,19 +1639,23 @@
                 <div class="chat-input-section">
                     <textarea id="chat-input" placeholder="Type your message..." rows="2"></textarea>
                     <div class="chat-controls">
-                        <button class="btn-make-offer" onclick="showOfferInput()" title="Make Price Offer" style="display: none;">
+                        <button class="btn-make-offer" title="Make Price Offer" style="display: none;">
                             <i class="ph-bold ph-currency-dollar"></i>
+                        </button>
+                        <button class="btn-attach-file" title="Attach File">
+                            <i class="ph-bold ph-paperclip"></i>
                         </button>
                         <button class="btn-send-message">>
                             <i class="ph-bold ph-paper-plane-right"></i>
                         </button>
                     </div>
+                    <input type="file" id="chat-file-input" style="display: none;" multiple accept=".pdf,.doc,.docx,.txt,.png,.jpg,.jpeg,.gif">
                 </div>
                 
                 <div class="offer-input-section" id="offer-input-section" style="display: none;">
                     <div class="offer-input-header">
                         <span>Make a price offer for this assignment:</span>
-                        <button class="btn-cancel-offer" onclick="hideOfferInput()">
+                        <button class="btn-cancel-offer">
                             <i class="ph-bold ph-x"></i>
                         </button>
                     </div>
@@ -1258,7 +1664,7 @@
                             <span class="currency-symbol">₹</span>
                             <input type="number" id="offer-amount" placeholder="Enter amount" min="0" step="5">
                         </div>
-                        <button class="btn-send-offer" onclick="sendOffer()">
+                        <button class="btn-send-offer">
                             <i class="ph-bold ph-handshake"></i>
                             Send Offer
                         </button>

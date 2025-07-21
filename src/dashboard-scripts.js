@@ -36,7 +36,7 @@ function updateGreetingWithUser(user) {
         }
     }
     
-    // Update greeting element if it exists
+    // Update greeting element if it exists with enhanced animations
     const greetingElement = document.querySelector('.greeting h2');
     if (greetingElement) {
         // SECURE: Create elements programmatically to prevent XSS
@@ -45,11 +45,20 @@ function updateGreetingWithUser(user) {
         const nameSpan = document.createElement('span');
         nameSpan.id = 'user-name';
         nameSpan.textContent = firstName; // Safe: textContent prevents XSS
+        nameSpan.style.display = 'inline-block';
+        nameSpan.style.opacity = '0'; // Will be animated in by CSS
+        nameSpan.style.animation = 'greetingSlideIn 0.8s ease-out 0.3s forwards, nameGlow 3s ease-in-out 1s infinite';
         
         const motivationText = document.createTextNode(`! ${motivationalText}`);
         
         greetingElement.appendChild(nameSpan);
         greetingElement.appendChild(motivationText);
+
+        // Add a subtle greeting container animation
+        const greetingContainer = document.querySelector('.greeting');
+        if (greetingContainer) {
+            greetingContainer.style.animation = 'fadeInUp 0.6s ease-out';
+        }
     }
 }
 
@@ -116,7 +125,7 @@ document.addEventListener('DOMContentLoaded', () => {
         featureCards: document.querySelectorAll('.card'),
         sidebarToggle: document.getElementById('sidebar-toggle'),
         sidebar: document.querySelector('aside'),
-        progressFill: document.querySelector('.progress-fill'),
+        progressValue: document.querySelector('.progress-value'), // Updated from progressFill
         greeting: document.querySelector('.greeting h2'),
         metrics: document.querySelectorAll('.metric-value'),
         profileDropdownBtn: document.getElementById('profile-dropdown-btn'),
@@ -125,13 +134,27 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     // Basic validation to ensure critical elements exist
+    const missingElements = [];
+    const criticalElements = ['timeDisplay', 'dateDisplay', 'themeToggle', 'sidebar']; // Essential elements
+    
     for (const key in elements) {
         if (!elements[key] || (elements[key] instanceof NodeList && elements[key].length === 0)) {
-            console.error(`Critical element not found: ${key}. Dashboard may not function correctly.`);
-            // return; // Optional: Stop script execution if a critical element is missing
+            missingElements.push(key);
+            // Only warn for critical elements
+            if (criticalElements.includes(key)) {
+                console.warn(`Critical element not found: ${key}. Dashboard functionality may be limited.`);
+            }
         }
     }
-    console.log('✅ Dashboard initialized successfully - All elements found');
+    
+    if (missingElements.length === 0) {
+        console.log('✅ Dashboard initialized successfully - All elements found');
+    } else {
+        console.log(`✅ Dashboard initialized - ${Object.keys(elements).length - missingElements.length}/${Object.keys(elements).length} elements found`);
+        if (missingElements.some(el => criticalElements.includes(el))) {
+            console.warn('⚠️ Some critical elements are missing. Dashboard may have limited functionality.');
+        }
+    }
     
     // --- VARIABLE DECLARATIONS FOR INTERVALS & STATE ---
     let clockIntervalId = null;
@@ -161,6 +184,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const root = document.documentElement;
     elements.themeToggle.addEventListener('click', () => {
         isDarkMode = !isDarkMode;
+        
+        // Update ARIA attribute
+        elements.themeToggle.setAttribute('aria-pressed', isDarkMode ? 'true' : 'false');
+        
         if (isDarkMode) {
             root.style.setProperty('--bg-color', '#0B0E1A');
             root.style.setProperty('--text-color', '#F0F2F5');
@@ -168,6 +195,7 @@ document.addEventListener('DOMContentLoaded', () => {
             root.style.setProperty('--glass-bg', 'rgba(20, 25, 40, 0.75)');
             root.style.setProperty('--glass-border', 'rgba(255, 255, 255, 0.15)');
             elements.themeToggle.innerHTML = '<i class="ph-bold ph-sun"></i>';
+            elements.themeToggle.setAttribute('aria-label', 'Switch to light mode');
         } else {
             root.style.setProperty('--bg-color', '#FAFBFC');
             root.style.setProperty('--text-color', '#1A202C');
@@ -175,6 +203,15 @@ document.addEventListener('DOMContentLoaded', () => {
             root.style.setProperty('--glass-bg', 'rgba(255, 255, 255, 0.85)');
             root.style.setProperty('--glass-border', 'rgba(0, 0, 0, 0.08)');
             elements.themeToggle.innerHTML = '<i class="ph-bold ph-moon"></i>';
+            elements.themeToggle.setAttribute('aria-label', 'Switch to dark mode');
+        }
+    });
+    
+    // Add keyboard support for theme toggle
+    elements.themeToggle.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            elements.themeToggle.click();
         }
     });
 
@@ -282,6 +319,15 @@ document.addEventListener('DOMContentLoaded', () => {
             closeDropdown();
         }
     });
+    
+    // Add keyboard support for notification bell
+    elements.notificationBell.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            elements.notificationBell.click();
+        }
+    });
+    
     document.addEventListener('click', closeDropdown);
 
     // --- 7. PROFILE DROPDOWN FUNCTIONALITY ---
@@ -297,10 +343,14 @@ document.addEventListener('DOMContentLoaded', () => {
         
         elements.profileDropdown?.classList.toggle('hidden');
         
+        // Update ARIA attributes
+        const isExpanded = !elements.profileDropdown?.classList.contains('hidden');
+        elements.profileDropdownBtn?.setAttribute('aria-expanded', isExpanded.toString());
+        
         // Rotate the caret icon
         const caretIcon = elements.profileDropdownBtn.querySelector('i');
         if (caretIcon) {
-            caretIcon.style.transform = isHidden ? 'rotate(180deg)' : 'rotate(0deg)';
+            caretIcon.style.transform = isExpanded ? 'rotate(180deg)' : 'rotate(0deg)';
         }
     });
     
@@ -308,6 +358,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.addEventListener('click', (e) => {
         if (!elements.profileDropdownBtn?.contains(e.target)) {
             elements.profileDropdown?.classList.add('hidden');
+            elements.profileDropdownBtn?.setAttribute('aria-expanded', 'false');
             const caretIcon = elements.profileDropdownBtn?.querySelector('i');
             if (caretIcon) {
                 caretIcon.style.transform = 'rotate(0deg)';
@@ -316,9 +367,79 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // --- 8. WIDGET ANIMATIONS ---
-    // Progress Bar
-    if (elements.progressFill) {
-        setTimeout(() => { elements.progressFill.style.width = '50%'; }, 1000);
+    // Radial Progress Bar Animation
+    const radialProgress = document.querySelector('.radial-progress');
+    const progressValue = document.querySelector('.progress-value');
+    if (radialProgress && progressValue) {
+        setTimeout(() => {
+            const goalPercentage = 50; // Your dynamic value
+            radialProgress.style.background = `conic-gradient(var(--primary-accent) ${goalPercentage * 3.6}deg, rgba(255,255,255,0.1) 0deg)`;
+            progressValue.textContent = `${goalPercentage}%`;
+            
+            // Add a smooth counting animation
+            let currentProgress = 0;
+            const progressInterval = setInterval(() => {
+                if (currentProgress < goalPercentage) {
+                    currentProgress += 2;
+                    progressValue.textContent = `${currentProgress}%`;
+                    radialProgress.style.background = `conic-gradient(var(--primary-accent) ${currentProgress * 3.6}deg, rgba(255,255,255,0.1) 0deg)`;
+                } else {
+                    clearInterval(progressInterval);
+                }
+            }, 50);
+        }, 1500);
+    }
+    
+    // Replace skeleton loaders with real content
+    setTimeout(() => {
+        const timelineItems = document.querySelectorAll('.timeline-content');
+        const sampleContent = [
+            { text: '<b>DSP notes</b> for 3rd sem uploaded by user', time: '2 mins ago' },
+            { text: 'New listing in <b>Hostel Market</b>: "Kettle for sale"', time: '15 mins ago' },
+            { text: 'Help request for <b>"Compiler Design"</b> assignment', time: '1 hour ago' }
+        ];
+        
+        timelineItems.forEach((item, index) => {
+            if (sampleContent[index]) {
+                const textElement = item.querySelector('p');
+                const timeElement = item.querySelector('.timeline-time');
+                
+                if (textElement && timeElement) {
+                    // Smooth transition from skeleton to content
+                    textElement.style.opacity = '0';
+                    timeElement.style.opacity = '0';
+                    
+                    setTimeout(() => {
+                        textElement.classList.remove('skeleton');
+                        timeElement.classList.remove('skeleton');
+                        textElement.innerHTML = sampleContent[index].text;
+                        timeElement.textContent = sampleContent[index].time;
+                        textElement.style.height = 'auto';
+                        textElement.style.width = 'auto';
+                        textElement.style.opacity = '1';
+                        timeElement.style.opacity = '1';
+                    }, 200);
+                }
+            }
+        });
+    }, 2000);
+
+    // Progress Value Animation (updated for radial progress)
+    if (elements.progressValue) {
+        setTimeout(() => { 
+            // Animate progress value from 0% to 50%
+            let currentProgress = 0;
+            const targetProgress = 50;
+            const increment = 1;
+            const interval = setInterval(() => {
+                if (currentProgress >= targetProgress) {
+                    clearInterval(interval);
+                    return;
+                }
+                currentProgress += increment;
+                elements.progressValue.textContent = `${currentProgress}%`;
+            }, 30); // Smooth animation over 1.5 seconds
+        }, 1000);
     }
 
     // Analytics Number Counting
@@ -346,7 +467,78 @@ document.addEventListener('DOMContentLoaded', () => {
             }, stepTime);
         });
     }
+
+    // Enhanced Radial Progress Bar Animation
+    function animateRadialProgress() {
+        const radialProgress = document.querySelector('.radial-progress');
+        const progressValue = document.querySelector('.progress-value');
+        
+        if (radialProgress && progressValue) {
+            // Dynamic goal calculation based on time of day
+            const currentHour = new Date().getHours();
+            let goalPercentage;
+            
+            if (currentHour < 9) {
+                goalPercentage = Math.min(30 + currentHour * 2, 45); // Early morning
+            } else if (currentHour < 17) {
+                goalPercentage = Math.min(50 + (currentHour - 9) * 3, 85); // Daytime
+            } else if (currentHour < 22) {
+                goalPercentage = Math.max(85 - (currentHour - 17) * 5, 60); // Evening
+            } else {
+                goalPercentage = Math.max(60 - (currentHour - 22) * 10, 25); // Late night
+            }
+
+            let currentPercentage = 0;
+            const duration = 1500;
+            const stepTime = 20;
+            const totalSteps = duration / stepTime;
+            const increment = goalPercentage / totalSteps;
+
+            // Animate the progress
+            const progressTimer = setInterval(() => {
+                currentPercentage += increment;
+                if (currentPercentage >= goalPercentage) {
+                    currentPercentage = goalPercentage;
+                    clearInterval(progressTimer);
+                    
+                    // Add completion glow effect
+                    radialProgress.style.animation = 'progressRotate 20s linear infinite, progressGlow 2s ease-in-out 3';
+                }
+                
+                // Update visual elements
+                const degrees = currentPercentage * 3.6;
+                radialProgress.style.background = `conic-gradient(
+                    var(--primary-accent) ${degrees}deg, 
+                    rgba(255,255,255,0.1) ${degrees}deg
+                )`;
+                radialProgress.style.setProperty('--progress-degrees', `${degrees}deg`);
+                progressValue.textContent = `${Math.floor(currentPercentage)}%`;
+                
+                // Add dynamic color based on progress
+                if (currentPercentage < 30) {
+                    radialProgress.style.setProperty('--progress-color', '#ff6b6b');
+                } else if (currentPercentage < 70) {
+                    radialProgress.style.setProperty('--progress-color', '#ffd93d');
+                } else {
+                    radialProgress.style.setProperty('--progress-color', '#00cec9');
+                }
+            }, stepTime);
+
+            // Add interactive hover effects
+            radialProgress.addEventListener('mouseenter', () => {
+                progressValue.style.transform = 'scale(1.1)';
+                progressValue.style.textShadow = '0 0 20px var(--primary-accent)';
+            });
+
+            radialProgress.addEventListener('mouseleave', () => {
+                progressValue.style.transform = 'scale(1)';
+                progressValue.style.textShadow = '0 0 15px rgba(255, 217, 61, 0.8)';
+            });
+        }
+    }
+
     setTimeout(animateMetrics, 1000);
+    setTimeout(animateRadialProgress, 1500); // Start after metrics animation
 
     // Scroll-triggered animations
     const observer = new IntersectionObserver((entries) => {

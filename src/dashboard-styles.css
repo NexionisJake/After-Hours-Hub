@@ -131,6 +131,36 @@ body::before {
     50% { opacity: 1; transform: scale(1); }
 }
 
+/* ===== ENHANCED GREETING ANIMATIONS ===== */
+@keyframes greetingSlideIn {
+    from {
+        opacity: 0;
+        transform: translateX(-20px) scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0) scale(1);
+    }
+}
+
+@keyframes nameGlow {
+    0%, 100% {
+        text-shadow: 0 0 5px var(--primary-accent);
+    }
+    50% {
+        text-shadow: 0 0 20px var(--primary-accent);
+    }
+}
+
+#user-name {
+    display: inline-block;
+    animation: greetingSlideIn 0.5s ease-out 0.2s forwards, nameGlow 3s ease-in-out infinite;
+    opacity: 0;
+    color: var(--primary-accent);
+    font-weight: 600;
+    text-shadow: 0 0 10px rgba(255, 217, 61, 0.3);
+}
+
 /* Floating decorative elements */
 .decoration {
     position: absolute;
@@ -449,6 +479,67 @@ aside {
     100% { opacity: 1; }
 }
 
+/* ===== ENHANCED SKELETON LOADERS ===== */
+.skeleton {
+    animation: skeletonPulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    background-color: rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    position: relative;
+    overflow: hidden;
+}
+
+.skeleton::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, 
+        transparent 0%, 
+        rgba(255, 255, 255, 0.15) 30%,
+        rgba(255, 255, 255, 0.25) 50%,
+        rgba(255, 255, 255, 0.15) 70%,
+        transparent 100%
+    );
+    animation: skeletonShimmer 2s infinite;
+}
+
+@keyframes skeletonPulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+@keyframes skeletonShimmer {
+    0% { left: -100%; }
+    100% { left: 100%; }
+}
+
+/* Enhanced skeleton variants */
+.skeleton-text {
+    height: 1rem;
+    margin: 0.5rem 0;
+}
+
+.skeleton-text.large {
+    height: 1.5rem;
+}
+
+.skeleton-text.small {
+    height: 0.75rem;
+}
+
+.skeleton-avatar {
+    width: 3rem;
+    height: 3rem;
+    border-radius: 50%;
+}
+
+.skeleton-card {
+    height: 8rem;
+    border-radius: 16px;
+}
+
 .greeting h2 {
     font-size: 2rem;
     font-weight: 600;
@@ -571,12 +662,79 @@ aside {
 }
 
 .card:hover {
-    transform: translateY(-8px) scale(1.02);
-    box-shadow: 0 20px 80px 0 rgba(75, 205, 231, 0.4);
+    transform: translateY(-8px) scale(1.03);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+    border-color: var(--primary-accent);
     background: linear-gradient(135deg, 
-        rgba(84, 207, 216, 0.1) 0%, 
-        rgba(17, 17, 20, 0.8) 50%, 
-        rgba(28, 55, 59, 0.605) 100%);
+        rgba(255, 217, 61, 0.1) 0%, 
+        var(--glass-bg) 50%, 
+        rgba(108, 92, 231, 0.1) 100%);
+    backdrop-filter: blur(20px);
+    animation: cardGlow 1s ease-in-out;
+}
+
+.card:hover .card-icon {
+    transform: scale(1.1) rotateY(5deg) rotateZ(-2deg);
+    color: var(--primary-accent);
+    text-shadow: 0 0 15px currentColor;
+    animation: iconBounce 0.6s ease-out;
+}
+
+.card:hover .card-title {
+    color: var(--primary-accent);
+    text-shadow: 0 0 8px rgba(255, 217, 61, 0.3);
+    transform: translateY(-2px);
+}
+
+/* Enhanced card animations */
+@keyframes cardGlow {
+    0% { 
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+    }
+    50% { 
+        box-shadow: 
+            0 25px 50px rgba(0, 0, 0, 0.5),
+            0 0 30px rgba(255, 217, 61, 0.2);
+    }
+    100% { 
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+    }
+}
+
+@keyframes iconBounce {
+    0%, 100% { 
+        transform: scale(1.1) rotateY(5deg) rotateZ(-2deg);
+    }
+    25% { 
+        transform: scale(1.15) rotateY(10deg) rotateZ(-4deg);
+    }
+    50% { 
+        transform: scale(1.2) rotateY(0deg) rotateZ(0deg);
+    }
+    75% { 
+        transform: scale(1.15) rotateY(-5deg) rotateZ(2deg);
+    }
+}
+
+/* Card interaction ripple effect */
+.card::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(255, 217, 61, 0.3) 0%, transparent 70%);
+    transform: translate(-50%, -50%);
+    transition: width 0.6s ease-out, height 0.6s ease-out;
+    z-index: -1;
+    pointer-events: none;
+}
+
+.card:hover::after {
+    width: 120%;
+    height: 120%;
 }
 
 /* Different accent colors for card types */
@@ -930,6 +1088,97 @@ aside {
     border-radius: 4px;
     transition: width 1s ease;
     animation: progressGlow 2s ease-in-out infinite alternate;
+}
+
+/* ===== ENHANCED RADIAL PROGRESS BAR ===== */
+.radial-progress {
+    position: relative;
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    background: conic-gradient(var(--primary-accent) 0deg, rgba(255,255,255,0.1) 0deg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 1rem auto;
+    transition: all 0.5s cubic-bezier(0.25, 1, 0.5, 1);
+    border: 3px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 
+        0 0 20px rgba(255, 217, 61, 0.3),
+        inset 0 0 20px rgba(255, 217, 61, 0.1);
+    animation: progressRotate 20s linear infinite;
+}
+
+.radial-progress::before {
+    content: '';
+    position: absolute;
+    width: 100px;
+    height: 100px;
+    background: var(--bg-color);
+    border-radius: 50%;
+    box-shadow: inset 0 0 15px rgba(0, 0, 0, 0.3);
+    border: 2px solid rgba(255, 255, 255, 0.05);
+}
+
+.progress-value {
+    position: relative;
+    font-size: 1.8rem;
+    font-weight: 600;
+    color: var(--primary-accent);
+    text-shadow: 0 0 15px rgba(255, 217, 61, 0.8);
+    z-index: 10;
+    animation: progressPulse 3s ease-in-out infinite;
+}
+
+.radial-progress:hover {
+    transform: scale(1.05) rotateZ(5deg);
+    box-shadow: 
+        0 0 40px rgba(255, 217, 61, 0.6),
+        inset 0 0 30px rgba(255, 217, 61, 0.2);
+    animation-play-state: paused;
+}
+
+/* Progress animation keyframes */
+@keyframes progressRotate {
+    from { 
+        filter: hue-rotate(0deg);
+    }
+    to { 
+        filter: hue-rotate(360deg);
+    }
+}
+
+@keyframes progressPulse {
+    0%, 100% { 
+        transform: scale(1);
+        text-shadow: 0 0 15px rgba(255, 217, 61, 0.8);
+    }
+    50% { 
+        transform: scale(1.1);
+        text-shadow: 0 0 25px rgba(255, 217, 61, 1);
+    }
+}
+
+/* Interactive progress segments */
+.radial-progress::after {
+    content: '';
+    position: absolute;
+    width: 12px; /* Made slightly larger for better visibility */
+    height: 12px;
+    background: white; /* Changed to white for a cleaner look */
+    border-radius: 50%;
+    /* This new transform rotates the dot around the center */
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) rotate(var(--progress-degrees, 0deg)) translateY(-54px);
+    box-shadow: 0 0 10px var(--primary-accent);
+    animation: progressDot 2s ease-in-out infinite;
+    transition: transform 0.2s linear; /* Smooths out the rotation */
+}
+
+@keyframes progressDot {
+    0%, 100% { opacity: 0.5; }
+    50% { opacity: 1; transform: translateX(-50%) scale(1.3); }
 }
 
 @keyframes progressGlow {

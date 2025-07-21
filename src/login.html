@@ -4,12 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     
-    <!-- Security: Content Security Policy - Updated for all external resources including Phosphor Icons -->
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://www.gstatic.com https://unpkg.com https://cdn.tailwindcss.com https://www.googletagmanager.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://fonts.gstatic.com https://cdn.tailwindcss.com https://cdn.jsdelivr.net https://unpkg.com; font-src 'self' https://fonts.gstatic.com https://cdn.jsdelivr.net https://unpkg.com; img-src 'self' data: https:; connect-src 'self' https://firestore.googleapis.com https://firebase.googleapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://www.google-analytics.com https://analytics.google.com ws://127.0.0.1:3001 ws://localhost:3001;">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://www.gstatic.com https://unpkg.com https://cdn.tailwindcss.com https://www.googletagmanager.com https://apis.google.com https://accounts.google.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://fonts.gstatic.com https://cdn.tailwindcss.com https://cdn.jsdelivr.net https://unpkg.com; font-src 'self' https://fonts.gstatic.com https://cdn.jsdelivr.net https://unpkg.com; img-src 'self' data: https:; connect-src 'self' https://firestore.googleapis.com https://firebase.googleapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://www.google-analytics.com https://analytics.google.com https://apis.google.com https://accounts.google.com https://oauth2.googleapis.com ws://127.0.0.1:3001 ws://localhost:3001; frame-src https://accounts.google.com https://after-hours-hub.firebaseapp.com;">
     
     <title>Login - After Hours Hub</title>
-    
-    <script src="https://cdn.tailwindcss.com"></script>
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -39,6 +36,7 @@
             background-size: 400% 400%;
             animation: gradientShift 15s ease infinite;
             overflow: hidden;
+            perspective: 1000px; /* Added for 3D parallax effect */
         }
 
         /* Keyframe Animations */
@@ -56,6 +54,22 @@
         @keyframes spin {
             to { transform: rotate(360deg); }
         }
+        
+        /* ===== NEW: LOGO ICON ANIMATION ===== */
+        @keyframes pulseGlow {
+            0%, 100% {
+                transform: scale(1);
+                text-shadow: 0 0 10px var(--primary-accent);
+            }
+            50% {
+                transform: scale(1.05);
+                text-shadow: 0 0 20px var(--primary-accent);
+            }
+        }
+        
+        .ph-coffee {
+            animation: pulseGlow 4s ease-in-out infinite;
+        }
 
         /* Decoration and Animation Styles */
         .decoration {
@@ -67,6 +81,7 @@
             animation: float 8s ease-in-out infinite;
             opacity: 0.2;
             z-index: 0;
+            transition: transform 0.2s ease-out; /* For parallax effect */
         }
 
         /* Class for the card entry animation */
@@ -74,10 +89,30 @@
             transition: transform 0.7s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.7s ease-out;
             transform: scale(0.95) translateY(20px);
             opacity: 0;
+            will-change: transform; /* Performance optimization for parallax */
         }
 
         .login-card-container.loaded {
             transform: scale(1) translateY(0);
+            opacity: 1;
+        }
+
+        /* ===== NEW: SHINE EFFECT ON CARD ===== */
+        .login-card-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border-radius: 1rem;
+            background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 60%);
+            opacity: 0;
+            transition: opacity 0.5s;
+            pointer-events: none;
+        }
+
+        .login-card-container:hover::before {
             opacity: 1;
         }
         
@@ -85,15 +120,96 @@
         .spinner {
             animation: spin 1s linear infinite;
             border: 2px solid rgba(255, 255, 255, 0.3);
-            border-top-color: white; /* For the light button */
+            border-top-color: white;
             border-radius: 50%;
-            width: 1.25rem; /* 20px */
-            height: 1.25rem; /* 20px */
+            width: 1.25rem;
+            height: 1.25rem;
         }
         
         .spinner.dark {
-            border-top-color: #0B0E1A; /* For the dark button */
+            border-top-color: #0B0E1A;
         }
+        
+        /* ===== NEW: TOAST NOTIFICATION STYLES ===== */
+        #toast-container {
+            position: fixed;
+            top: 1.25rem;
+            right: 1.25rem;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        @keyframes fadeInOut {
+            0%, 100% { opacity: 0; transform: translateY(-20px); }
+            10%, 90% { opacity: 1; transform: translateY(0); }
+        }
+
+        .toast {
+            padding: 1rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            color: white;
+            animation: fadeInOut 5s forwards;
+            backdrop-filter: blur(10px);
+        }
+
+        /* ===== UTILITY CLASSES (to avoid external CDN) ===== */
+        .min-h-screen { min-height: 100vh; }
+        .flex { display: flex; }
+        .flex-col { flex-direction: column; }
+        .items-center { align-items: center; }
+        .justify-center { justify-content: center; }
+        .p-4 { padding: 1rem; }
+        .relative { position: relative; }
+        .z-10 { z-index: 10; }
+        .w-full { width: 100%; }
+        .w-5 { width: 1.25rem; }
+        .h-5 { height: 1.25rem; }
+        .max-w-md { max-width: 28rem; }
+        .rounded-2xl { border-radius: 1rem; }
+        .rounded-lg { border-radius: 0.5rem; }
+        .p-8 { padding: 2rem; }
+        .py-3 { padding-top: 0.75rem; padding-bottom: 0.75rem; }
+        .px-4 { padding-left: 1rem; padding-right: 1rem; }
+        .mb-10 { margin-bottom: 2.5rem; }
+        .mb-4 { margin-bottom: 1rem; }
+        .mt-2 { margin-top: 0.5rem; }
+        .mt-12 { margin-top: 3rem; }
+        .gap-3 { gap: 0.75rem; }
+        .space-y-6 > * + * { margin-top: 1.5rem; }
+        .text-4xl { font-size: 2.25rem; line-height: 2.5rem; }
+        .text-lg { font-size: 1.125rem; line-height: 1.75rem; }
+        .text-md { font-size: 1rem; line-height: 1.5rem; }
+        .text-sm { font-size: 0.875rem; line-height: 1.25rem; }
+        .text-xs { font-size: 0.75rem; line-height: 1rem; }
+        .font-bold { font-weight: 700; }
+        .font-medium { font-weight: 500; }
+        .text-white { color: white; }
+        .text-center { text-align: center; }
+        .inline-flex { display: inline-flex; }
+        .antialiased { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+        .flex-grow { flex-grow: 1; }
+        .flex-shrink { flex-shrink: 1; }
+        .mx-4 { margin-left: 1rem; margin-right: 1rem; }
+        .border { border-width: 1px; }
+        .border-t { border-top-width: 1px; }
+        .rounded-full { border-radius: 9999px; }
+        .transition-all { transition-property: all; transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1); transition-duration: 300ms; }
+        .hover\:scale-105:hover { transform: scale(1.05); }
+        .focus\:outline-none:focus { outline: 2px solid transparent; outline-offset: 2px; }
+        .disabled\:opacity-70:disabled { opacity: 0.7; }
+        .disabled\:cursor-not-allowed:disabled { cursor: not-allowed; }
+        .bg-yellow-400\/10 { background-color: rgba(251, 191, 36, 0.1); }
+        .bg-red-500 { background-color: rgb(239 68 68); }
+        .bg-green-500 { background-color: rgb(34 197 94); }
+        .text-yellow-300 { color: rgb(253, 224, 71); }
+        .shadow-lg { box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); }
+        .border-yellow-400\/20 { border-color: rgba(251, 191, 36, 0.2); }
+        button { transition: transform 0.1s ease-out; }
+        button:active { transform: scale(0.98); } /* NEW: Pressed state for buttons */
+        @media (min-width: 768px) { .md\:p-12 { padding: 3rem; } }
     </style>
 </head>
 <body class="antialiased">
@@ -116,7 +232,7 @@
             </div>
 
             <div class="space-y-6">
-                <button id="google-login-btn" class="w-full flex items-center justify-center gap-3 py-3 px-4 rounded-lg transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 focus:ring-yellow-400 disabled:opacity-70 disabled:cursor-not-allowed" style="background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border);">
+                <button id="google-login-btn" class="w-full flex items-center justify-center gap-3 py-3 px-4 rounded-lg hover:scale-105 transition-all disabled:opacity-70 disabled:cursor-not-allowed" style="background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border);">
                     <svg class="w-5 h-5" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12s5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24s8.955,20,20,20s20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z"></path><path fill="#FF3D00" d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.691z"></path><path fill="#4CAF50" d="M24,44c5.166,0,9.86-1.977,13.409-5.192l-6.19-5.238C29.211,35.091,26.715,36,24,36c-5.202,0-9.619-3.317-11.283-7.946l-6.522,5.025C9.505,39.556,16.227,44,24,44z"></path><path fill="#1976D2" d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.571l6.19,5.238C43.021,36.251,44,34,44,30C44,22.659,43.862,21.35,43.611,20.083z"></path></svg>
                     <span class="text-md font-medium" style="color: var(--text-secondary);">Login with Google</span>
                 </button>
@@ -127,7 +243,7 @@
                     <div class="flex-grow border-t" style="border-color: var(--glass-border);"></div>
                 </div>
 
-                <button id="guest-login-btn" class="w-full flex items-center justify-center gap-3 py-3 px-4 rounded-lg shadow-lg transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 focus:ring-yellow-500 transform hover:scale-105 disabled:opacity-70 disabled:cursor-not-allowed" style="background: linear-gradient(135deg, var(--primary-accent) 0%, #ffca60 100%); color: var(--bg-color); box-shadow: 0 8px 25px rgba(255, 191, 66, 0.3);">
+                <button id="guest-login-btn" class="w-full flex items-center justify-center gap-3 py-3 px-4 rounded-lg shadow-lg hover:scale-105 transition-all disabled:opacity-70 disabled:cursor-not-allowed" style="background: linear-gradient(135deg, var(--primary-accent) 0%, #ffca60 100%); color: var(--bg-color); box-shadow: 0 8px 25px rgba(255, 191, 66, 0.3);">
                     <span class="text-md font-bold">Continue as Guest</span>
                 </button>
             </div>
@@ -139,11 +255,30 @@
         </div>
     </div>
 
+    <div id="toast-container"></div>
+
     <script type="module" src="firebase-auth.js"></script>
     
     <script>
+        // ===== NEW: TOAST NOTIFICATION FUNCTION =====
+        function showToast(message, type = 'error') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            const bgColor = type === 'error' ? 'bg-red-500' : 'bg-green-500';
+
+            toast.className = `toast ${bgColor}`;
+            toast.textContent = message;
+
+            container.appendChild(toast);
+
+            setTimeout(() => {
+                toast.remove();
+            }, 5000);
+        }
+
         document.addEventListener('DOMContentLoaded', () => {
             const guestLoginBtn = document.getElementById('guest-login-btn');
+            const googleLoginBtn = document.getElementById('google-login-btn');
             const loginCard = document.getElementById('login-card');
 
             // Entry Animation for the Login Card
@@ -151,20 +286,50 @@
                 loginCard.classList.add('loaded');
             }, 100);
 
-            // Guest Login Handler - SECURITY NOTE: This bypasses authentication
+            // ===== NEW: GOOGLE BUTTON LOADER =====
+            googleLoginBtn.addEventListener('click', () => {
+                googleLoginBtn.innerHTML = `
+                    <div class="spinner"></div>
+                    <span style="color: var(--text-secondary);">Connecting...</span>
+                `;
+                googleLoginBtn.disabled = true;
+                guestLoginBtn.disabled = true;
+                // The actual sign-in logic is handled by firebase-auth.js
+            });
+
+            // Guest Login Handler
             guestLoginBtn.addEventListener('click', () => {
-                // Security Warning: Guest login should be removed in production
-                console.warn('⚠️ SECURITY: Guest login bypasses authentication - remove in production');
+                console.warn('⚠️ SECURITY: Guest login bypasses authentication.');
                 
                 guestLoginBtn.innerHTML = `
                     <div class="spinner dark"></div>
                     <span>Redirecting...</span>
                 `;
                 guestLoginBtn.disabled = true;
-                document.getElementById('google-login-btn').disabled = true;
+                googleLoginBtn.disabled = true;
 
-                // Immediate redirect - no need for setTimeout security delay
                 window.location.href = 'dashboard-clean.html';
+            });
+        });
+        
+        // ===== NEW: PARALLAX HOVER EFFECT =====
+        document.addEventListener('mousemove', (e) => {
+            const { clientX, clientY } = e;
+            const width = window.innerWidth;
+            const height = window.innerHeight;
+            const x = (clientX / width - 0.5) * 2;
+            const y = (clientY / height - 0.5) * 2;
+
+            const card = document.getElementById('login-card');
+            const decorations = document.querySelectorAll('.decoration');
+
+            if (card) {
+                card.style.transform = `rotateY(${x * 4}deg) rotateX(${-y * 4}deg)`;
+            }
+
+            decorations.forEach(dec => {
+                const speed = (dec.style.animationDelay.length % 2 + 1) * 5;
+                dec.style.transform = `translateX(${x * speed}px) translateY(${y * speed}px)`;
             });
         });
     </script>
