@@ -5,6 +5,7 @@ import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/
 import { getFirestore, collection, addDoc, query, orderBy, onSnapshot, serverTimestamp, doc, updateDoc, getDocs, limit } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import { firebaseConfig, cloudinaryConfig } from './firebase-config.js';
 import { handleError, validateInput, requestRateLimit, sanitizeText, messagingRateLimit } from './security-utils.js';
+import { initiateChat } from './chat-system.js';
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
@@ -587,8 +588,14 @@ function createSecureItemCard(doc, item) {
             }
         });
     } else if (!isSold) {
-        actionButton.className = 'btn-contact';
+        actionButton.className = 'btn-contact contact-seller-btn';
         actionButton.textContent = 'Contact Seller';
+        actionButton.addEventListener('click', () => {
+            // Secure: No global function exposure, with input validation
+            if (doc && doc.id && item.sellerId) {
+                initiateChat(item.sellerId, doc.id, item.name, 'market');
+            }
+        });
     } else {
         actionButton.className = 'btn-sold';
         actionButton.textContent = 'SOLD';

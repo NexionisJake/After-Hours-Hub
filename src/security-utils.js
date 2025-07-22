@@ -153,53 +153,64 @@ function showErrorMessage(message) {
 }
 
 /**
+ * Rate limiting utility class
+ */
+class RateLimiter {
+    constructor(limit, timeWindow) {
+        this.limit = limit;
+        this.timeWindow = timeWindow;
+        this.timestamps = {};
+    }
+    
+    isAllowed(key) {
+        const now = Date.now();
+        const userTimestamps = this.timestamps[key] || [];
+        
+        // Filter out timestamps that are outside the time window
+        const recentTimestamps = userTimestamps.filter(timestamp => now - timestamp < this.timeWindow);
+        
+        if (recentTimestamps.length >= this.limit) {
+            // Rate limit exceeded
+            return false;
+        }
+        
+        // Add the new timestamp and update the record
+        recentTimestamps.push(now);
+        this.timestamps[key] = recentTimestamps;
+        
+        return true;
+    }
+    
+    getRemainingTime(key) {
+        const now = Date.now();
+        const userTimestamps = this.timestamps[key] || [];
+        
+        // Filter out timestamps that are outside the time window
+        const recentTimestamps = userTimestamps.filter(timestamp => now - timestamp < this.timeWindow);
+        
+        if (recentTimestamps.length < this.limit) {
+            return 0; // No rate limit active
+        }
+        
+        // Return the time until the oldest timestamp expires
+        const oldestTimestamp = Math.min(...recentTimestamps);
+        const remainingTime = this.timeWindow - (now - oldestTimestamp);
+        return Math.max(0, remainingTime);
+    }
+}
+
+/**
  * Rate limiting for messaging to prevent spam
  */
-const messageTimestamps = {};
 const MESSAGE_LIMIT = 5; // Max 5 messages
-const TIME_WINDOW = 10 * 1000; // within 10 seconds
+const MESSAGE_TIME_WINDOW = 10 * 1000; // within 10 seconds
 
-export function messagingRateLimit(userId) {
-    const now = Date.now();
-    const userTimestamps = messageTimestamps[userId] || [];
-
-    // Filter out timestamps that are outside the time window
-    const recentTimestamps = userTimestamps.filter(timestamp => now - timestamp < TIME_WINDOW);
-
-    if (recentTimestamps.length >= MESSAGE_LIMIT) {
-        // Rate limit exceeded
-        return false;
-    }
-
-    // Add the new timestamp and update the record
-    recentTimestamps.push(now);
-    messageTimestamps[userId] = recentTimestamps;
-
-    return true;
-}
+export const messagingRateLimit = new RateLimiter(MESSAGE_LIMIT, MESSAGE_TIME_WINDOW);
 
 /**
  * Rate limiting for request creation to prevent spam
  */
-const requestTimestamps = {};
 const REQUEST_LIMIT = 3; // Max 3 requests
 const REQUEST_TIME_WINDOW = 5 * 60 * 1000; // within 5 minutes
 
-export function requestRateLimit(userId) {
-    const now = Date.now();
-    const userTimestamps = requestTimestamps[userId] || [];
-
-    // Filter out timestamps that are outside the time window
-    const recentTimestamps = userTimestamps.filter(timestamp => now - timestamp < REQUEST_TIME_WINDOW);
-
-    if (recentTimestamps.length >= REQUEST_LIMIT) {
-        // Rate limit exceeded
-        return false;
-    }
-
-    // Add the new timestamp and update the record
-    recentTimestamps.push(now);
-    requestTimestamps[userId] = recentTimestamps;
-
-    return true;
-}
+export const requestRateLimit = new RateLimiter(REQUEST_LIMIT, REQUEST_TIME_WINDOW);

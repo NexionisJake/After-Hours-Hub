@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat System Test - After Hours Hub</title>
+    <link rel="stylesheet" href="dashboard-styles.css">
+    <link rel="stylesheet" href="chat-styles.css">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <style>
+        .test-container {
+            max-width: 600px;
+            margin: 2rem auto;
+            padding: 2rem;
+            background: var(--glass-bg);
+            border-radius: 20px;
+            border: 1px solid var(--glass-border);
+        }
+        
+        .test-button {
+            background: var(--primary-accent);
+            color: white;
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: 12px;
+            cursor: pointer;
+            margin: 1rem;
+            font-size: 1rem;
+        }
+        
+        .test-info {
+            background: #f0f8ff;
+            border: 1px solid #b8daff;
+            border-radius: 8px;
+            padding: 1rem;
+            margin: 1rem 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>🧪 Chat System Test</h1>
+        <p>This page helps test the chat functionality.</p>
+        
+        <div class="test-info">
+            <p><strong>Instructions:</strong></p>
+            <ol>
+                <li>Make sure you're logged in</li>
+                <li>Click "Test Market Chat" to simulate contacting a seller</li>
+                <li>Click "Test Assignment Chat" to simulate offering help</li>
+                <li>The chat modal should open with a working interface</li>
+            </ol>
+        </div>
+        
+        <button class="test-button" onclick="testMarketChat()">
+            💬 Test Market Chat
+        </button>
+        
+        <button class="test-button" onclick="testAssignmentChat()">
+            📚 Test Assignment Chat
+        </button>
+        
+        <button class="test-button" onclick="window.location.href='chats.html'">
+            📋 View All Chats
+        </button>
+        
+        <div id="test-status"></div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+        import { firebaseConfig } from './firebase-config.js';
+        import { initiateChat } from './chat-system.js';
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+
+        let currentUser = null;
+
+        // Check authentication
+        onAuthStateChanged(auth, (user) => {
+            const statusDiv = document.getElementById('test-status');
+            if (user) {
+                currentUser = user;
+                statusDiv.innerHTML = `
+                    <div style="color: green; margin-top: 1rem;">
+                        ✅ Logged in as: ${user.displayName || user.email}
+                    </div>
+                `;
+            } else {
+                statusDiv.innerHTML = `
+                    <div style="color: red; margin-top: 1rem;">
+                        ❌ Not logged in. <a href="login.html">Click here to login</a>
+                    </div>
+                `;
+            }
+        });
+
+        // Test functions
+        window.testMarketChat = function() {
+            if (!currentUser) {
+                alert('Please login first!');
+                return;
+            }
+            
+            // For testing, we'll create a "self-chat" using the current user's UID
+            // In real usage, this would be another user's UID
+            const testSellerId = currentUser.uid; // Using current user for testing
+            const testItemId = 'test-market-item-' + Date.now();
+            const testItemTitle = 'Used Physics Textbook (Test)';
+            
+            try {
+                initiateChat(testSellerId, testItemId, testItemTitle, 'market');
+            } catch (error) {
+                console.error('Test chat error:', error);
+                alert('Chat test failed. Check console for details.');
+            }
+        };
+
+        window.testAssignmentChat = function() {
+            if (!currentUser) {
+                alert('Please login first!');
+                return;
+            }
+            
+            // For testing, we'll create a "self-chat" using the current user's UID
+            // In real usage, this would be another user's UID  
+            const testAuthorId = currentUser.uid; // Using current user for testing
+            const testRequestId = 'test-assignment-req-' + Date.now();
+            const testRequestTitle = 'Help with Data Structures Assignment (Test)';
+            
+            try {
+                initiateChat(testAuthorId, testRequestId, testRequestTitle, 'assignment');
+            } catch (error) {
+                console.error('Test chat error:', error);
+                alert('Chat test failed. Check console for details.');
+            }
+        };
+    </script>
+</body>
+</html>

@@ -34,6 +34,36 @@ service cloud.firestore {
       // Don't allow deletion for now - just mark as sold
       allow delete: if false;
     }
+
+    // Rules for Lost & Found items
+    match /lostAndFoundItems/{itemId} {
+      // Anyone who is signed in can read lost & found items
+      allow read: if isSignedIn();
+
+      // Only signed-in users can create items, and they must include their user ID
+      allow create: if isSignedIn()
+        && request.resource.data.reportedBy.uid == request.auth.uid
+        && request.resource.data.createdAt != null;
+
+      // Only the person who reported the item can update it
+      allow update: if isSignedIn() 
+        && resource.data.reportedBy.uid == request.auth.uid;
+        
+      // Don't allow deletion - items should be marked as resolved
+      allow delete: if false;
+    }
+
+    // Rules for Chat System - Simplified for testing
+    match /chats/{chatId} {
+      // Allow all operations if user is signed in (we'll tighten this later)
+      allow read, write: if isSignedIn();
+
+      // Messages subcollection
+      match /messages/{messageId} {
+        // Allow all operations if user is signed in (we'll tighten this later)
+        allow read, write: if isSignedIn();
+      }
+    }
   }
 }
   

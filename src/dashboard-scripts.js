@@ -3,11 +3,19 @@
 // ===== START: FIREBASE AUTH GUARD =====
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { 
+    getFirestore, 
+    collection, 
+    query, 
+    where, 
+    onSnapshot 
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import { firebaseConfig } from './firebase-config.js';
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
+const db = getFirestore(app);
 
 // Function to extract first name and update greeting
 function updateGreetingWithUser(user) {
@@ -83,6 +91,9 @@ onAuthStateChanged(auth, (user) => {
         
         // Update greeting with user's first name
         updateGreetingWithUser(user);
+        
+        // Update Lost & Found stats
+        updateLostAndFoundStats();
     } else {
         // No user is signed in. Redirect to login page.
         console.log("No user found, redirecting to login.");
@@ -104,6 +115,67 @@ const handleSignOut = () => {
 
 // Make handleSignOut globally accessible
 window.handleSignOut = handleSignOut;
+
+// ===== LOST & FOUND STATS UPDATE =====
+function updateLostAndFoundStats() {
+    const lostFoundCard = document.querySelector('[data-route="lostfound"]');
+    const analyticsMetric = document.getElementById('lost-found-metric');
+    
+    console.log('Attempting to load Lost & Found stats...');
+    
+    // Simple query to get all items first, then filter manually if needed
+    const allItemsQuery = collection(db, 'lostAndFoundItems');
+
+    // Real-time listener for stats
+    onSnapshot(allItemsQuery, (querySnapshot) => {
+        // Filter for open items manually
+        let openItemsCount = 0;
+        querySnapshot.forEach((doc) => {
+            const data = doc.data();
+            if (data.status === 'open') {
+                openItemsCount++;
+            }
+        });
+        
+        console.log('Found open items:', openItemsCount);
+        
+        // Update card stat
+        if (lostFoundCard) {
+            const statElement = lostFoundCard.querySelector('.card-stat');
+            if (statElement) {
+                if (openItemsCount === 0) {
+                    statElement.textContent = 'No open cases';
+                } else if (openItemsCount === 1) {
+                    statElement.textContent = '1 open case';
+                } else {
+                    statElement.textContent = `${openItemsCount} open cases`;
+                }
+            }
+        }
+        
+        // Update analytics metric
+        if (analyticsMetric) {
+            analyticsMetric.textContent = openItemsCount.toString();
+        }
+    }, (error) => {
+        console.error('Error fetching lost & found stats:', error);
+        console.error('Error code:', error.code);
+        console.error('Error message:', error.message);
+        
+        // Update with error state
+        if (lostFoundCard) {
+            const statElement = lostFoundCard.querySelector('.card-stat');
+            if (statElement) {
+                statElement.textContent = 'Stats unavailable';
+            }
+        }
+        
+        if (analyticsMetric) {
+            analyticsMetric.textContent = 'Error';
+        }
+    });
+}
+
 // ===== END: FIREBASE AUTH GUARD =====
 
 
@@ -243,6 +315,14 @@ document.addEventListener('DOMContentLoaded', () => {
             // ===== ADD THIS NEW CASE =====
             if (route === 'market') {
                 window.location.href = 'hostel-market.html';
+                return;
+            }
+            if (route === 'lostfound') {
+                window.location.href = 'lost-and-found.html';
+                return;
+            }
+            if (route === 'chats') {
+                window.location.href = 'chats.html';
                 return;
             }
             // ===== END NEW CASE =====

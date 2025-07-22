@@ -13,6 +13,7 @@ import {
     where
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import { firebaseConfig } from './firebase-config.js';
+import { initiateChat } from './chat-system.js';
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
@@ -655,7 +656,7 @@ function createRequestElement(request) {
             <i class="ph-bold ph-calendar-check"></i> Due: ${formattedDueDate}
         </div>
         
-        <button class="view-details-btn">
+        <button class="view-details-btn offer-help-btn">
             <i class="ph-bold ph-chat-centered-text"></i>
             Offer Help
         </button>
@@ -664,9 +665,12 @@ function createRequestElement(request) {
     // Add event listener to the "Offer Help" button
     const offerHelpButton = el.querySelector('.view-details-btn');
     offerHelpButton.addEventListener('click', () => {
-        // Handle "Offer Help" click (could open a chat or details modal)
-        console.log(`Offering help for request: ${request.id}`);
-        // This would be implemented to open a chat or modal
+        // Initiate chat with the request author
+        if (request.authorId && request.id) {
+            initiateChat(request.authorId, request.id, request.title, 'assignment');
+        } else {
+            console.error('Missing request data for chat initiation:', request);
+        }
     });
     
     return el;
