@@ -8,7 +8,10 @@ import {
     collection, 
     query, 
     where, 
-    onSnapshot 
+    onSnapshot,
+    orderBy,
+    limit,
+    getDocs
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import { firebaseConfig } from './firebase-config.js';
 
@@ -97,12 +100,86 @@ onAuthStateChanged(auth, (user) => {
         
         // Update Lost & Found stats
         updateLostAndFoundStats();
+        
+        // Update Assignment Help stats
+        updateAssignmentHelpStats();
+        
+        // Update Hostel Market stats
+        updateHostelMarketStats();
+        
+        // Update My Chats stats
+        updateMyChatsStats(user);
+        
+        // === ENHANCED SESSION MANAGEMENT ===
+        setupSessionManagement(user);
     } else {
         // No user is signed in. Redirect to login page.
         console.log("No user found, redirecting to login.");
         window.location.href = 'login.html';
     }
 });
+
+// === SESSION MANAGEMENT FUNCTIONS ===
+function setupSessionManagement(user) {
+    // Auto logout after 24 hours of inactivity
+    const AUTO_LOGOUT_TIME = 24 * 60 * 60 * 1000; // 24 hours
+    let inactivityTimer = null;
+    let lastActivity = Date.now();
+    
+    // Track user activity
+    const trackActivity = () => {
+        lastActivity = Date.now();
+        resetInactivityTimer();
+    };
+    
+    const resetInactivityTimer = () => {
+        if (inactivityTimer) {
+            clearTimeout(inactivityTimer);
+        }
+        
+        inactivityTimer = setTimeout(() => {
+            console.log('Auto-logout due to inactivity');
+            handleSignOut();
+        }, AUTO_LOGOUT_TIME);
+    };
+    
+    // Add activity listeners
+    const activityEvents = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart', 'click'];
+    activityEvents.forEach(event => {
+        document.addEventListener(event, trackActivity, { passive: true });
+    });
+    
+    // Token refresh every hour
+    const TOKEN_REFRESH_INTERVAL = 60 * 60 * 1000; // 1 hour
+    const refreshAuthToken = () => {
+        if (auth.currentUser) {
+            auth.currentUser.getIdToken(true)
+                .then(token => {
+                    console.log('Token refreshed successfully');
+                })
+                .catch(error => {
+                    console.error('Token refresh failed:', error);
+                    // If token refresh fails, sign out for security
+                    if (error.code === 'auth/user-token-expired') {
+                        console.log('Token expired, signing out');
+                        handleSignOut();
+                    }
+                });
+        }
+    };
+    
+    // Set up token refresh interval
+    setInterval(refreshAuthToken, TOKEN_REFRESH_INTERVAL);
+    
+    // Initial timer setup
+    resetInactivityTimer();
+    
+    // Session information for debugging (remove in production)
+    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+        console.log('Session management initialized for user:', user.uid);
+        console.log('Auto-logout set to:', AUTO_LOGOUT_TIME / (1000 * 60 * 60), 'hours');
+    }
+}
 
 
 const handleSignOut = () => {
@@ -179,6 +256,377 @@ function updateLostAndFoundStats() {
     });
 }
 
+// ===== ASSIGNMENT HELP STATS UPDATE =====
+function updateAssignmentHelpStats() {
+    console.log('Attempting to load Assignment Help stats...');
+    
+    // First, let's try to get all assignment requests to debug
+    const allAssignmentsQuery = collection(db, 'assignmentRequests');
+    
+    onSnapshot(allAssignmentsQuery, (querySnapshot) => {
+        console.log('Total assignment requests in database:', querySnapshot.size);
+        
+        // Debug: Log all documents to see their structure
+        let openCount = 0;
+        querySnapshot.forEach((doc) => {
+            const data = doc.data();
+            console.log('Assignment request:', {
+                id: doc.id,
+                title: data.title,
+                completed: data.completed
+            });
+            if (data.completed === false) {
+                openCount++;
+            }
+        });
+        
+        console.log('Found open assignment requests:', openCount);
+        
+        // Update card stat
+        const statElement = document.getElementById('assignment-help-stat');
+        if (statElement) {
+            if (openCount === 0) {
+                statElement.textContent = 'No open requests';
+            } else if (openCount === 1) {
+                statElement.textContent = '1 open request';
+            } else {
+                statElement.textContent = `${openCount} open requests`;
+            }
+        }
+    }, (error) => {
+        console.error('Error fetching assignment help stats:', error);
+        
+        // Update with error state
+        const statElement = document.getElementById('assignment-help-stat');
+        if (statElement) {
+            statElement.textContent = 'Stats unavailable';
+        }
+    });
+}
+
+// ===== HOSTEL MARKET STATS UPDATE =====
+function updateHostelMarketStats() {
+    console.log('Attempting to load Hostel Market stats...');
+    
+    // Updated to use the correct field name: isSold instead of status
+    const allListingsQuery = collection(db, 'marketListings');
+    
+    onSnapshot(allListingsQuery, (querySnapshot) => {
+        console.log('Total market listings in database:', querySnapshot.size);
+        
+        // Debug: Log all documents to see their structure
+        let availableCount = 0;
+        querySnapshot.forEach((doc) => {
+            const data = doc.data();
+            console.log('Market listing:', {
+                id: doc.id,
+                name: data.name,
+                isSold: data.isSold,
+                price: data.price
+            });
+            if (data.isSold === false) {
+                availableCount++;
+            }
+        });
+        
+        console.log('Found available market items:', availableCount);
+        
+        // Update card stat
+        const statElement = document.getElementById('hostel-market-stat');
+        if (statElement) {
+            if (availableCount === 0) {
+                statElement.textContent = 'No items available';
+            } else if (availableCount === 1) {
+                statElement.textContent = '1 item available';
+            } else {
+                statElement.textContent = `${availableCount} items available`;
+            }
+        }
+    }, (error) => {
+        console.error('Error fetching hostel market stats:', error);
+        
+        // Update with error state
+        const statElement = document.getElementById('hostel-market-stat');
+        if (statElement) {
+            statElement.textContent = 'Stats unavailable';
+        }
+    });
+}
+
+// ===== MY CHATS STATS UPDATE =====
+function updateMyChatsStats(user) {
+    if (!user) {
+        console.log('No user provided for chat stats');
+        return;
+    }
+    
+    console.log('Attempting to load My Chats stats for user:', user.uid);
+    
+    // Query for all chats to debug the structure
+    const allChatsQuery = collection(db, 'chats');
+    
+    onSnapshot(allChatsQuery, (querySnapshot) => {
+        console.log('Total chats in database:', querySnapshot.size);
+        
+        // Debug: Log all documents to see their structure
+        let userChatsCount = 0;
+        querySnapshot.forEach((doc) => {
+            const data = doc.data();
+            console.log('Chat document:', {
+                id: doc.id,
+                participants: data.participants,
+                userInChat: data.participants && data.participants.includes(user.uid)
+            });
+            if (data.participants && data.participants.includes(user.uid)) {
+                userChatsCount++;
+            }
+        });
+        
+        console.log('Found active chats for user:', userChatsCount);
+        
+        // Update card stat
+        const statElement = document.getElementById('my-chats-stat');
+        if (statElement) {
+            if (userChatsCount === 0) {
+                statElement.textContent = 'No active chats';
+            } else if (userChatsCount === 1) {
+                statElement.textContent = '1 active chat';
+            } else {
+                statElement.textContent = `${userChatsCount} active chats`;
+            }
+        }
+    }, (error) => {
+        console.error('Error fetching my chats stats:', error);
+        
+        // Update with error state
+        const statElement = document.getElementById('my-chats-stat');
+        if (statElement) {
+            statElement.textContent = 'Stats unavailable';
+        }
+    });
+}
+
+// ===== FETCH LATEST ACTIVITY FOR BUZZ WIDGET =====
+async function fetchLatestActivity() {
+    try {
+        console.log('Fetching latest activity across platform...');
+
+        // Create queries for each collection to get the most recent item
+        const assignmentRequestsQuery = query(
+            collection(db, 'assignmentRequests'),
+            orderBy('createdAt', 'desc'),
+            limit(1)
+        );
+
+        const marketListingsQuery = query(
+            collection(db, 'marketListings'),
+            orderBy('createdAt', 'desc'),
+            limit(1)
+        );
+
+        const lostAndFoundQuery = query(
+            collection(db, 'lostAndFoundItems'),
+            orderBy('createdAt', 'desc'),
+            limit(1)
+        );
+
+        // Execute all queries concurrently for better performance
+        const [assignmentSnapshot, marketSnapshot, lostFoundSnapshot] = await Promise.all([
+            getDocs(assignmentRequestsQuery),
+            getDocs(marketListingsQuery),
+            getDocs(lostAndFoundQuery)
+        ]);
+
+        // Collect all latest items with their metadata
+        const latestItems = [];
+
+        // Process assignment requests
+        assignmentSnapshot.forEach(doc => {
+            const data = doc.data();
+            latestItems.push({
+                type: 'assignment',
+                data: data,
+                createdAt: data.createdAt?.toDate() || new Date(),
+                id: doc.id
+            });
+        });
+
+        // Process market listings
+        marketSnapshot.forEach(doc => {
+            const data = doc.data();
+            latestItems.push({
+                type: 'market',
+                data: data,
+                createdAt: data.createdAt?.toDate() || new Date(),
+                id: doc.id
+            });
+        });
+
+        // Process lost & found items
+        lostFoundSnapshot.forEach(doc => {
+            const data = doc.data();
+            latestItems.push({
+                type: 'lostfound',
+                data: data,
+                createdAt: data.createdAt?.toDate() || new Date(),
+                id: doc.id
+            });
+        });
+
+        // Sort by createdAt timestamp to get the most recent activities
+        latestItems.sort((a, b) => b.createdAt - a.createdAt);
+
+        // Take only the top 3 most recent activities
+        const topThreeActivities = latestItems.slice(0, 3);
+
+        console.log('Latest activities fetched:', topThreeActivities);
+        return topThreeActivities;
+
+    } catch (error) {
+        console.error('Error fetching latest activity:', error);
+        // Return fallback content
+        return [
+            {
+                type: 'fallback',
+                data: { title: 'Welcome to After Hours Hub!' },
+                createdAt: new Date(),
+                id: 'fallback-1'
+            },
+            {
+                type: 'fallback', 
+                data: { title: 'Connect with your study community' },
+                createdAt: new Date(Date.now() - 60000),
+                id: 'fallback-2'
+            },
+            {
+                type: 'fallback',
+                data: { title: 'Share, learn, and grow together' },
+                createdAt: new Date(Date.now() - 120000),
+                id: 'fallback-3'
+            }
+        ];
+    }
+}
+
+// ===== UPDATE BUZZ WIDGET WITH LIVE DATA =====
+function updateBuzzWidget(activities) {
+    const timelineItems = document.querySelectorAll('.timeline-content');
+    
+    activities.forEach((activity, index) => {
+        if (index < timelineItems.length && timelineItems[index]) {
+            const timelineContent = timelineItems[index];
+            const textElement = timelineContent.querySelector('p');
+            const timeElement = timelineContent.querySelector('.timeline-time');
+            const timelineItem = timelineContent.closest('.timeline-item');
+            const dotIcon = timelineItem?.querySelector('.timeline-dot i');
+
+            if (textElement && timeElement) {
+                // Generate content based on activity type
+                let contentElements = [];
+                let timeAgo = getTimeAgo(activity.createdAt);
+                let icon = 'ph-fill ph-pulse'; // Default icon
+
+                switch (activity.type) {
+                    case 'assignment':
+                        const title = activity.data.title || 'Assignment Help Request';
+                        const authorName = activity.data.authorName || 'Someone';
+                        
+                        const authorBold = document.createElement('b');
+                        authorBold.textContent = authorName;
+                        contentElements = [authorBold, ' needs help with: "', title, '"'];
+                        icon = 'ph-fill ph-books';
+                        break;
+
+                    case 'market':
+                        const itemName = activity.data.name || 'Item';
+                        const sellerName = activity.data.sellerName || 'Someone';
+                        
+                        const sellerBold = document.createElement('b');
+                        sellerBold.textContent = sellerName;
+                        contentElements = [sellerBold, ' listed: "', itemName, '" in marketplace'];
+                        icon = 'ph-fill ph-tag';
+                        break;
+
+                    case 'lostfound':
+                        const lostFoundTitle = activity.data.itemName || 'Item';
+                        const reporterName = activity.data.reportedBy?.displayName || 'Someone';
+                        const isLost = activity.data.itemType === 'lost';
+                        
+                        const reporterBold = document.createElement('b');
+                        reporterBold.textContent = reporterName;
+                        contentElements = [reporterBold, ` ${isLost ? 'lost' : 'found'}: "`, lostFoundTitle, '"'];
+                        icon = 'ph-fill ph-magnifying-glass';
+                        break;
+
+                    case 'fallback':
+                        const fallbackBold = document.createElement('b');
+                        fallbackBold.textContent = activity.data.title || '';
+                        contentElements = [fallbackBold];
+                        icon = 'ph-fill ph-hands-clapping';
+                        break;
+
+                    default:
+                        content = '<b>New activity</b> in After Hours Hub';
+                        icon = 'ph-fill ph-pulse';
+                }
+
+                // Update the icon
+                if (dotIcon) {
+                    dotIcon.className = `${icon}`;
+                    dotIcon.style.fontSize = '0.8rem';
+                    dotIcon.style.color = 'var(--bg-color)';
+                }
+
+                // Smooth transition from skeleton to content
+                textElement.style.opacity = '0';
+                timeElement.style.opacity = '0';
+                
+                setTimeout(() => {
+                    textElement.classList.remove('skeleton');
+                    timeElement.classList.remove('skeleton');
+                    
+                    // Clear existing content and append new elements safely
+                    textElement.textContent = '';
+                    for (const element of contentElements) {
+                        if (typeof element === 'string') {
+                            textElement.appendChild(document.createTextNode(element));
+                        } else {
+                            textElement.appendChild(element);
+                        }
+                    }
+                    
+                    timeElement.textContent = timeAgo;
+                    textElement.style.height = 'auto';
+                    textElement.style.width = 'auto';
+                    textElement.style.opacity = '1';
+                    timeElement.style.opacity = '1';
+                }, 200 + (index * 100)); // Stagger the animations
+            }
+        }
+    });
+}
+
+// ===== HELPER FUNCTIONS =====
+function getTimeAgo(date) {
+    const now = new Date();
+    const diffInMilliseconds = now - date;
+    const diffInMinutes = Math.floor(diffInMilliseconds / (1000 * 60));
+    const diffInHours = Math.floor(diffInMinutes / 60);
+    const diffInDays = Math.floor(diffInHours / 24);
+
+    if (diffInMinutes < 1) {
+        return 'Just now';
+    } else if (diffInMinutes < 60) {
+        return `${diffInMinutes} min${diffInMinutes !== 1 ? 's' : ''} ago`;
+    } else if (diffInHours < 24) {
+        return `${diffInHours} hour${diffInHours !== 1 ? 's' : ''} ago`;
+    } else if (diffInDays < 7) {
+        return `${diffInDays} day${diffInDays !== 1 ? 's' : ''} ago`;
+    } else {
+        return date.toLocaleDateString();
+    }
+}
+
 // ===== END: FIREBASE AUTH GUARD =====
 
 
@@ -237,6 +685,47 @@ document.addEventListener('DOMContentLoaded', () => {
     let isDarkMode = true;
     let searchTimeout;
 
+    // --- COMING SOON NOTIFICATION FUNCTION ---
+    function showComingSoonNotification(featureName) {
+        // Create notification element
+        const notification = document.createElement('div');
+        notification.className = 'coming-soon-notification';
+        
+        // Create notification content with proper escaping
+        const iconElement = document.createElement('i');
+        iconElement.className = 'ph-bold ph-rocket-launch';
+        const titleText = document.createElement('div');
+        titleText.className = 'notification-title';
+        titleText.textContent = 'Coming Soon!';
+        
+        const messageText = document.createElement('div');
+        messageText.className = 'notification-message';
+        messageText.textContent = `${featureName} is currently under development. Stay tuned!`;
+        
+        // Assemble notification
+        notification.appendChild(iconElement);
+        notification.appendChild(titleText);
+        notification.appendChild(messageText);
+        
+        // Add to body
+        document.body.appendChild(notification);
+        
+        // Animate in
+        setTimeout(() => {
+            notification.classList.add('show');
+        }, 100);
+        
+        // Animate out and remove
+        setTimeout(() => {
+            notification.classList.remove('show');
+            setTimeout(() => {
+                if (document.body.contains(notification)) {
+                    document.body.removeChild(notification);
+                }
+            }, 300); // Wait for animation to complete
+        }, 3000); // Show for 3 seconds
+    }
+
     // --- 1. DYNAMIC CLOCK AND DATE ---
     function updateClock() {
         try { 
@@ -268,7 +757,11 @@ document.addEventListener('DOMContentLoaded', () => {
             root.style.setProperty('--text-secondary', '#B8BCC8');
             root.style.setProperty('--glass-bg', 'rgba(20, 25, 40, 0.75)');
             root.style.setProperty('--glass-border', 'rgba(255, 255, 255, 0.15)');
-            elements.themeToggle.innerHTML = '<i class="ph-bold ph-sun"></i>';
+            // Clear existing content and add sun icon
+            elements.themeToggle.textContent = '';
+            const sunIcon = document.createElement('i');
+            sunIcon.className = 'ph-bold ph-sun';
+            elements.themeToggle.appendChild(sunIcon);
             elements.themeToggle.setAttribute('aria-label', 'Switch to light mode');
         } else {
             root.style.setProperty('--bg-color', '#FAFBFC');
@@ -276,7 +769,11 @@ document.addEventListener('DOMContentLoaded', () => {
             root.style.setProperty('--text-secondary', '#4A5568');
             root.style.setProperty('--glass-bg', 'rgba(255, 255, 255, 0.85)');
             root.style.setProperty('--glass-border', 'rgba(0, 0, 0, 0.08)');
-            elements.themeToggle.innerHTML = '<i class="ph-bold ph-moon"></i>';
+            // Clear existing content and add moon icon
+            elements.themeToggle.textContent = '';
+            const moonIcon = document.createElement('i');
+            moonIcon.className = 'ph-bold ph-moon';
+            elements.themeToggle.appendChild(moonIcon);
             elements.themeToggle.setAttribute('aria-label', 'Switch to dark mode');
         }
     });
@@ -307,29 +804,42 @@ document.addEventListener('DOMContentLoaded', () => {
         card.addEventListener('click', (e) => {
             e.stopPropagation();
             
-            // --- NEW LOGIC ---
-            // If the card has a data-route, navigate to the new page
+            // Get route and feature name
             const route = card.dataset.route;
-            if (route === 'help') {
-                window.location.href = 'assign-help.html';
-                return; // Stop further execution
+            const featureName = card.querySelector('.card-title')?.textContent || 'Feature';
+            
+            // Handle different routes
+            switch (route) {
+                case 'help':
+                    window.location.href = 'assign-help.html';
+                    return;
+                case 'market':
+                    window.location.href = 'hostel-market.html';
+                    return;
+                case 'lostfound':
+                    window.location.href = 'lost-and-found.html';
+                    return;
+                case 'chats':
+                    window.location.href = 'chats.html';
+                    return;
+                case 'notes':
+                case 'pyqs':
+                case 'esports':
+                case 'events':
+                case 'clubs':
+                    // These are in development - show coming soon notification
+                    showComingSoonNotification(featureName);
+                    return;
+                default:
+                    // For any other routes without specific handlers, show coming soon
+                    if (route) {
+                        showComingSoonNotification(featureName);
+                        return;
+                    }
+                    break;
             }
-            // ===== ADD THIS NEW CASE =====
-            if (route === 'market') {
-                window.location.href = 'hostel-market.html';
-                return;
-            }
-            if (route === 'lostfound') {
-                window.location.href = 'lost-and-found.html';
-                return;
-            }
-            if (route === 'chats') {
-                window.location.href = 'chats.html';
-                return;
-            }
-            // ===== END NEW CASE =====
-            // --- END NEW LOGIC ---
 
+            // Fallback to the original expand/collapse behavior for cards without routes
             const isExpanded = card.classList.contains('expanded');
             elements.featureCards.forEach(otherCard => otherCard.classList.remove('expanded'));
             if (!isExpanded) {
@@ -419,80 +929,37 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // --- 8. WIDGET ANIMATIONS ---
-    // Radial Progress Bar Animation
-    const radialProgress = document.querySelector('.radial-progress');
-    const progressValue = document.querySelector('.progress-value');
-    if (radialProgress && progressValue) {
-        setTimeout(() => {
-            const goalPercentage = 50; // Your dynamic value
-            radialProgress.style.background = `conic-gradient(var(--primary-accent) ${goalPercentage * 3.6}deg, rgba(255,255,255,0.1) 0deg)`;
-            progressValue.textContent = `${goalPercentage}%`;
-            
-            // Add a smooth counting animation
-            let currentProgress = 0;
-            const progressInterval = setInterval(() => {
-                if (currentProgress < goalPercentage) {
-                    currentProgress += 2;
-                    progressValue.textContent = `${currentProgress}%`;
-                    radialProgress.style.background = `conic-gradient(var(--primary-accent) ${currentProgress * 3.6}deg, rgba(255,255,255,0.1) 0deg)`;
-                } else {
-                    clearInterval(progressInterval);
-                }
-            }, 50);
-        }, 1500);
-    }
     
-    // Replace skeleton loaders with real content
-    setTimeout(() => {
-        const timelineItems = document.querySelectorAll('.timeline-content');
-        const sampleContent = [
-            { text: '<b>DSP notes</b> for 3rd sem uploaded by user', time: '2 mins ago' },
-            { text: 'New listing in <b>Hostel Market</b>: "Kettle for sale"', time: '15 mins ago' },
-            { text: 'Help request for <b>"Compiler Design"</b> assignment', time: '1 hour ago' }
-        ];
-        
-        timelineItems.forEach((item, index) => {
-            if (sampleContent[index]) {
-                const textElement = item.querySelector('p');
-                const timeElement = item.querySelector('.timeline-time');
-                
-                if (textElement && timeElement) {
-                    // Smooth transition from skeleton to content
-                    textElement.style.opacity = '0';
-                    timeElement.style.opacity = '0';
-                    
-                    setTimeout(() => {
-                        textElement.classList.remove('skeleton');
-                        timeElement.classList.remove('skeleton');
-                        textElement.innerHTML = sampleContent[index].text;
-                        timeElement.textContent = sampleContent[index].time;
-                        textElement.style.height = 'auto';
-                        textElement.style.width = 'auto';
-                        textElement.style.opacity = '1';
-                        timeElement.style.opacity = '1';
-                    }, 200);
+    // Load dynamic content for buzz widget
+    setTimeout(async () => {
+        try {
+            const latestActivities = await fetchLatestActivity();
+            updateBuzzWidget(latestActivities);
+        } catch (error) {
+            console.error('Error loading buzz widget content:', error);
+            // Fallback to default content
+            updateBuzzWidget([
+                {
+                    type: 'fallback',
+                    data: { title: 'Welcome to After Hours Hub!' },
+                    createdAt: new Date(),
+                    id: 'fallback-1'
+                },
+                {
+                    type: 'fallback', 
+                    data: { title: 'Connect with your study community' },
+                    createdAt: new Date(Date.now() - 60000),
+                    id: 'fallback-2'
+                },
+                {
+                    type: 'fallback',
+                    data: { title: 'Share, learn, and grow together' },
+                    createdAt: new Date(Date.now() - 120000),
+                    id: 'fallback-3'
                 }
-            }
-        });
+            ]);
+        }
     }, 2000);
-
-    // Progress Value Animation (updated for radial progress)
-    if (elements.progressValue) {
-        setTimeout(() => { 
-            // Animate progress value from 0% to 50%
-            let currentProgress = 0;
-            const targetProgress = 50;
-            const increment = 1;
-            const interval = setInterval(() => {
-                if (currentProgress >= targetProgress) {
-                    clearInterval(interval);
-                    return;
-                }
-                currentProgress += increment;
-                elements.progressValue.textContent = `${currentProgress}%`;
-            }, 30); // Smooth animation over 1.5 seconds
-        }, 1000);
-    }
 
     // Analytics Number Counting
     function animateMetrics() {
@@ -520,77 +987,72 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Enhanced Radial Progress Bar Animation
+    // ===== UNIFIED RADIAL PROGRESS ANIMATION =====
     function animateRadialProgress() {
         const radialProgress = document.querySelector('.radial-progress');
         const progressValue = document.querySelector('.progress-value');
         
-        if (radialProgress && progressValue) {
-            // Dynamic goal calculation based on time of day
-            const currentHour = new Date().getHours();
-            let goalPercentage;
-            
-            if (currentHour < 9) {
-                goalPercentage = Math.min(30 + currentHour * 2, 45); // Early morning
-            } else if (currentHour < 17) {
-                goalPercentage = Math.min(50 + (currentHour - 9) * 3, 85); // Daytime
-            } else if (currentHour < 22) {
-                goalPercentage = Math.max(85 - (currentHour - 17) * 5, 60); // Evening
-            } else {
-                goalPercentage = Math.max(60 - (currentHour - 22) * 10, 25); // Late night
-            }
+        if (!radialProgress || !progressValue) return;
 
-            let currentPercentage = 0;
-            const duration = 1500;
-            const stepTime = 20;
-            const totalSteps = duration / stepTime;
-            const increment = goalPercentage / totalSteps;
-
-            // Animate the progress
-            const progressTimer = setInterval(() => {
-                currentPercentage += increment;
-                if (currentPercentage >= goalPercentage) {
-                    currentPercentage = goalPercentage;
-                    clearInterval(progressTimer);
-                    
-                    // Add completion glow effect
-                    radialProgress.style.animation = 'progressRotate 20s linear infinite, progressGlow 2s ease-in-out 3';
-                }
-                
-                // Update visual elements
-                const degrees = currentPercentage * 3.6;
-                radialProgress.style.background = `conic-gradient(
-                    var(--primary-accent) ${degrees}deg, 
-                    rgba(255,255,255,0.1) ${degrees}deg
-                )`;
-                radialProgress.style.setProperty('--progress-degrees', `${degrees}deg`);
-                progressValue.textContent = `${Math.floor(currentPercentage)}%`;
-                
-                // Add dynamic color based on progress
-                if (currentPercentage < 30) {
-                    radialProgress.style.setProperty('--progress-color', '#ff6b6b');
-                } else if (currentPercentage < 70) {
-                    radialProgress.style.setProperty('--progress-color', '#ffd93d');
-                } else {
-                    radialProgress.style.setProperty('--progress-color', '#00cec9');
-                }
-            }, stepTime);
-
-            // Add interactive hover effects
-            radialProgress.addEventListener('mouseenter', () => {
-                progressValue.style.transform = 'scale(1.1)';
-                progressValue.style.textShadow = '0 0 20px var(--primary-accent)';
-            });
-
-            radialProgress.addEventListener('mouseleave', () => {
-                progressValue.style.transform = 'scale(1)';
-                progressValue.style.textShadow = '0 0 15px rgba(255, 217, 61, 0.8)';
-            });
+        // Dynamic goal calculation based on time of day
+        const currentHour = new Date().getHours();
+        let goalPercentage;
+        
+        if (currentHour < 9) {
+            goalPercentage = Math.min(30 + currentHour * 2, 45); // Early morning
+        } else if (currentHour < 17) {
+            goalPercentage = Math.min(50 + (currentHour - 9) * 3, 85); // Daytime
+        } else if (currentHour < 22) {
+            goalPercentage = Math.max(85 - (currentHour - 17) * 5, 60); // Evening
+        } else {
+            goalPercentage = Math.max(60 - (currentHour - 22) * 10, 25); // Late night
         }
+
+        // Determine progress color based on percentage
+        let progressColor;
+        if (goalPercentage < 30) {
+            progressColor = '#ff6b6b'; // Red for low progress
+        } else if (goalPercentage < 70) {
+            progressColor = '#FFD93D'; // Yellow for medium progress
+        } else {
+            progressColor = '#00cec9'; // Green for high progress
+        }
+
+        // Animation variables
+        let currentPercentage = 0;
+        const duration = 1500; // 1.5 seconds
+        const stepTime = 16; // ~60fps
+        const totalSteps = duration / stepTime;
+        const increment = goalPercentage / totalSteps;
+
+        // Clear any existing animation
+        if (window.progressAnimationId) {
+            clearInterval(window.progressAnimationId);
+        }
+
+        // Unified animation function - controls EVERYTHING in sync
+        window.progressAnimationId = setInterval(() => {
+            currentPercentage += increment;
+            
+            if (currentPercentage >= goalPercentage) {
+                currentPercentage = goalPercentage;
+                clearInterval(window.progressAnimationId);
+            }
+            
+            // Update CSS variables (this controls both circle and dot position)
+            radialProgress.style.setProperty('--progress-percent', currentPercentage);
+            radialProgress.style.setProperty('--progress-color', progressColor);
+            
+            // Update text content
+            progressValue.textContent = `${Math.round(currentPercentage)}%`;
+            
+        }, stepTime);
+
+        console.log(`🎯 Goal set to ${goalPercentage}% based on time: ${currentHour}:00`);
     }
 
     setTimeout(animateMetrics, 1000);
-    setTimeout(animateRadialProgress, 1500); // Start after metrics animation
+    setTimeout(animateRadialProgress, 1200); // Start after metrics, single unified animation
 
     // Scroll-triggered animations
     const observer = new IntersectionObserver((entries) => {

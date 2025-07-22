@@ -1,3 +1,10 @@
+// CSRF token generation for form
+document.addEventListener('DOMContentLoaded', () => {
+    const csrfToken = crypto.randomUUID();
+    const csrfInputs = document.querySelectorAll('input[name="csrfToken"]');
+    csrfInputs.forEach(input => input.value = csrfToken);
+    window.csrfToken = csrfToken;
+});
 // src/hostel-market.js
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
@@ -451,7 +458,7 @@ function displayItems(items) {
         return;
     }
     
-    marketContainer.innerHTML = '';
+    marketContainer.textContent = '';
     
     if (items.length === 0) {
         const emptyMessage = document.createElement('p');
@@ -483,14 +490,42 @@ function createSecureItemCard(doc, item) {
         sellerPhotoURL: item.sellerPhotoURL || ''
     };
     
-    // Additional validation for URLs to prevent malicious content
-    const isValidImageUrl = sanitizedItem.imageUrl.startsWith('https://res.cloudinary.com/') || 
-                           sanitizedItem.imageUrl.startsWith('https://images.unsplash.com/') ||
-                           sanitizedItem.imageUrl.startsWith('data:image/');
+    // Enhanced validation for URLs to prevent malicious content
+    const validateImageUrl = (url) => {
+        if (!url || typeof url !== 'string') return false;
+        
+        // Allow specific trusted domains and data URLs for images
+        const trustedDomains = [
+            'https://res.cloudinary.com/',
+            'https://images.unsplash.com/',
+            'https://firebasestorage.googleapis.com/',
+            'https://lh3.googleusercontent.com/',  // Google user photos
+            'https://avatars.githubusercontent.com/' // GitHub avatars (if used)
+        ];
+        
+        // Check for data URLs (base64 images)
+        if (url.startsWith('data:image/')) {
+            // Validate data URL format
+            const dataUrlPattern = /^data:image\/(jpeg|jpg|png|gif|webp);base64,/i;
+            return dataUrlPattern.test(url);
+        }
+        
+        // Check against trusted domains
+        return trustedDomains.some(domain => url.startsWith(domain));
+    };
     
+    const isValidImageUrl = validateImageUrl(sanitizedItem.imageUrl);
+    const isValidSellerPhoto = validateImageUrl(sanitizedItem.sellerPhotoURL);
+    
+    // Block potentially unsafe URLs
     if (!isValidImageUrl && sanitizedItem.imageUrl !== '') {
         console.warn('Potentially unsafe image URL blocked:', sanitizedItem.imageUrl);
         sanitizedItem.imageUrl = ''; // Block potentially unsafe URLs
+    }
+    
+    if (!isValidSellerPhoto && sanitizedItem.sellerPhotoURL !== '') {
+        console.warn('Potentially unsafe seller photo URL blocked:', sanitizedItem.sellerPhotoURL);
+        sanitizedItem.sellerPhotoURL = ''; // Block potentially unsafe URLs
     }
     
     // Create main card element
@@ -632,15 +667,22 @@ function initializeMarketDataLoading() {
     // Verify authentication before proceeding
     if (!currentUser || !currentUser.uid) {
         console.error('User not authenticated for market data loading');
-        marketContainer.innerHTML = `
-            <div style="grid-column: 1 / -1; text-align: center; color: #ff6b6b; padding: 2rem;">
-                <i class="ph ph-warning-circle" style="font-size: 2rem; display: block; margin-bottom: 1rem;"></i>
-                <p>Authentication required. Please sign in to view the market.</p>
-                <button onclick="window.location.href='login.html'" style="margin-top: 1rem; padding: 0.5rem 1rem; background: var(--primary-accent); color: white; border: none; border-radius: 4px; cursor: pointer;">
-                    Sign In
-                </button>
-            </div>
-        `;
+        marketContainer.textContent = '';
+        const errorDiv = document.createElement('div');
+        errorDiv.style.cssText = 'grid-column: 1 / -1; text-align: center; color: #ff6b6b; padding: 2rem;';
+        const icon = document.createElement('i');
+        icon.className = 'ph ph-warning-circle';
+        icon.style.cssText = 'font-size: 2rem; display: block; margin-bottom: 1rem;';
+        errorDiv.appendChild(icon);
+        const p = document.createElement('p');
+        p.textContent = 'Authentication required. Please sign in to view the market.';
+        errorDiv.appendChild(p);
+        const btn = document.createElement('button');
+        btn.textContent = 'Sign In';
+        btn.style.cssText = 'margin-top: 1rem; padding: 0.5rem 1rem; background: var(--primary-accent); color: white; border: none; border-radius: 4px; cursor: pointer;';
+        btn.onclick = () => { window.location.href = 'login.html'; };
+        errorDiv.appendChild(btn);
+        marketContainer.appendChild(errorDiv);
         marketLoading.style.display = 'none';
         return;
     }
@@ -673,13 +715,20 @@ function initializeMarketDataLoading() {
                     console.log("No market items found");
                     allItems = [];
                     // Show empty state message
-                    marketContainer.innerHTML = `
-                        <div style="grid-column: 1 / -1; text-align: center; padding: 2rem;">
-                            <i class="ph ph-shopping-bag" style="font-size: 3rem; color: var(--text-secondary); margin-bottom: 1rem;"></i>
-                            <h3>No items listed yet</h3>
-                            <p>Be the first to list something in the market!</p>
-                        </div>
-                    `;
+                    marketContainer.textContent = '';
+                    const emptyDiv = document.createElement('div');
+                    emptyDiv.style.cssText = 'grid-column: 1 / -1; text-align: center; padding: 2rem;';
+                    const icon = document.createElement('i');
+                    icon.className = 'ph ph-shopping-bag';
+                    icon.style.cssText = 'font-size: 3rem; color: var(--text-secondary); margin-bottom: 1rem;';
+                    emptyDiv.appendChild(icon);
+                    const h3 = document.createElement('h3');
+                    h3.textContent = 'No items listed yet';
+                    emptyDiv.appendChild(h3);
+                    const p = document.createElement('p');
+                    p.textContent = 'Be the first to list something in the market!';
+                    emptyDiv.appendChild(p);
+                    marketContainer.appendChild(emptyDiv);
                 } else {
                     console.log(`Found ${querySnapshot.size} market items`);
                     querySnapshot.forEach((doc) => {
@@ -718,13 +767,20 @@ function initializeMarketDataLoading() {
                     console.log(`Retrying in ${backoffTime/1000} seconds...`);
                     
                     // Show temporary message to user
-                    marketContainer.innerHTML = `
-                        <div style="grid-column: 1 / -1; text-align: center; padding: 2rem;">
-                            <i class="ph ph-spinner" style="font-size: 2rem; animation: spin 1s infinite linear;"></i>
-                            <p>Reconnecting to market data...</p>
-                            <small>(Attempt ${retryCount} of ${maxRetries})</small>
-                        </div>
-                    `;
+                    marketContainer.textContent = '';
+                    const reconnectDiv = document.createElement('div');
+                    reconnectDiv.style.cssText = 'grid-column: 1 / -1; text-align: center; padding: 2rem;';
+                    const spinnerIcon = document.createElement('i');
+                    spinnerIcon.className = 'ph ph-spinner';
+                    spinnerIcon.style.cssText = 'font-size: 2rem; animation: spin 1s infinite linear;';
+                    reconnectDiv.appendChild(spinnerIcon);
+                    const p = document.createElement('p');
+                    p.textContent = 'Reconnecting to market data...';
+                    reconnectDiv.appendChild(p);
+                    const small = document.createElement('small');
+                    small.textContent = `(Attempt ${retryCount} of ${maxRetries})`;
+                    reconnectDiv.appendChild(small);
+                    marketContainer.appendChild(reconnectDiv);
                     
                     setTimeout(() => {
                         // Re-authenticate and try again
@@ -770,17 +826,22 @@ function initializeMarketDataLoading() {
 // Helper function to show error message in the market container
 function showErrorMessage(message) {
     if (!marketContainer) return;
-    
-    marketContainer.innerHTML = `
-        <div style="grid-column: 1 / -1; text-align: center; color: #ff6b6b; padding: 2rem;">
-            <i class="ph ph-warning-circle" style="font-size: 2rem; display: block; margin-bottom: 1rem;"></i>
-            <p>${message}</p>
-            <button onclick="location.reload()" style="margin-top: 1rem; padding: 0.5rem 1rem; background: var(--primary-accent); color: white; border: none; border-radius: 4px; cursor: pointer;">
-                Refresh Page
-            </button>
-        </div>
-    `;
-    
+    marketContainer.textContent = '';
+    const errorDiv = document.createElement('div');
+    errorDiv.style.cssText = 'grid-column: 1 / -1; text-align: center; color: #ff6b6b; padding: 2rem;';
+    const icon = document.createElement('i');
+    icon.className = 'ph ph-warning-circle';
+    icon.style.cssText = 'font-size: 2rem; display: block; margin-bottom: 1rem;';
+    errorDiv.appendChild(icon);
+    const p = document.createElement('p');
+    p.textContent = message;
+    errorDiv.appendChild(p);
+    const btn = document.createElement('button');
+    btn.textContent = 'Refresh Page';
+    btn.style.cssText = 'margin-top: 1rem; padding: 0.5rem 1rem; background: var(--primary-accent); color: white; border: none; border-radius: 4px; cursor: pointer;';
+    btn.onclick = () => { location.reload(); };
+    errorDiv.appendChild(btn);
+    marketContainer.appendChild(errorDiv);
     if (marketLoading) {
         marketLoading.style.display = 'none';
     }
@@ -825,10 +886,16 @@ function initializePageAfterAuth() {
             if (bodyElement) {
                 const errorDiv = document.createElement('div');
                 errorDiv.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; background-color: #ff6b6b; color: white; padding: 1rem; text-align: center; z-index: 9999;';
-                errorDiv.innerHTML = `
-                    <p><strong>Page Error:</strong> Some required elements are missing from the page.</p>
-                    <p>Please refresh the page or contact support if the issue persists.</p>
-                `;
+                errorDiv.textContent = '';
+                const p1 = document.createElement('p');
+                const strong = document.createElement('strong');
+                strong.textContent = 'Page Error:';
+                p1.appendChild(strong);
+                p1.appendChild(document.createTextNode(' Some required elements are missing from the page.'));
+                errorDiv.appendChild(p1);
+                const p2 = document.createElement('p');
+                p2.textContent = 'Please refresh the page or contact support if the issue persists.';
+                errorDiv.appendChild(p2);
                 bodyElement.prepend(errorDiv);
             }
             

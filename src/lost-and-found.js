@@ -1,3 +1,10 @@
+// CSRF token generation for form
+document.addEventListener('DOMContentLoaded', () => {
+    const csrfToken = crypto.randomUUID();
+    const csrfInputs = document.querySelectorAll('input[name="csrfToken"]');
+    csrfInputs.forEach(input => input.value = csrfToken);
+    window.csrfToken = csrfToken;
+});
 // src/lost-and-found.js
 // Lost and Found functionality for After Hours Hub
 
@@ -176,8 +183,13 @@ async function handleFormSubmission(e) {
     try {
         // Show loading state
         const submitBtn = reportForm.querySelector('.submit-btn');
-        const originalText = submitBtn.innerHTML;
-        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Submitting...';
+        // Save original children
+        const originalChildren = Array.from(submitBtn.childNodes);
+        submitBtn.textContent = '';
+        const spinnerIcon = document.createElement('i');
+        spinnerIcon.className = 'fas fa-spinner fa-spin';
+        submitBtn.appendChild(spinnerIcon);
+        submitBtn.appendChild(document.createTextNode(' Submitting...'));
         submitBtn.disabled = true;
 
         // Add to Firestore
@@ -188,7 +200,8 @@ async function handleFormSubmission(e) {
         showSuccessMessage('Item reported successfully!');
         
         // Restore button state
-        submitBtn.innerHTML = originalText;
+        submitBtn.textContent = '';
+        originalChildren.forEach(child => submitBtn.appendChild(child));
         submitBtn.disabled = false;
         
     } catch (error) {
@@ -197,7 +210,11 @@ async function handleFormSubmission(e) {
         
         // Restore button state
         const submitBtn = reportForm.querySelector('.submit-btn');
-        submitBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Submit Report';
+        submitBtn.textContent = '';
+        const planeIcon = document.createElement('i');
+        planeIcon.className = 'fas fa-paper-plane';
+        submitBtn.appendChild(planeIcon);
+        submitBtn.appendChild(document.createTextNode(' Submit Report'));
         submitBtn.disabled = false;
     }
 }
@@ -277,8 +294,14 @@ function displayItems(items) {
         return;
     }
 
-    const itemsHTML = items.map(item => createItemCard(item)).join('');
-    itemsContainer.innerHTML = `<div class="items-grid">${itemsHTML}</div>`;
+    const itemsGrid = document.createElement('div');
+    itemsGrid.className = 'items-grid';
+    items.forEach(item => {
+        const card = createItemCard(item);
+        itemsGrid.appendChild(card);
+    });
+    itemsContainer.textContent = '';
+    itemsContainer.appendChild(itemsGrid);
     
     // Add event listeners to resolve buttons
     addResolveButtonListeners();
@@ -361,8 +384,12 @@ async function handleResolveItem(e) {
     
     try {
         // Show loading state
-        const originalText = button.innerHTML;
-        button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Resolving...';
+        const originalNodes = Array.from(button.childNodes);
+        button.textContent = '';
+        const spinner = document.createElement('i');
+        spinner.className = 'fas fa-spinner fa-spin';
+        button.appendChild(spinner);
+        button.appendChild(document.createTextNode(' Resolving...'));
         button.disabled = true;
         
         // Update in Firestore
@@ -380,7 +407,8 @@ async function handleResolveItem(e) {
         alert('Failed to resolve item. Please try again.');
         
         // Restore button state
-        button.innerHTML = originalText;
+        button.textContent = '';
+        originalNodes.forEach(node => button.appendChild(node));
         button.disabled = false;
     }
 }
@@ -411,26 +439,38 @@ function showEmptyState() {
     
     const message = emptyMessages[currentFilter] || emptyMessages.all;
     
-    itemsContainer.innerHTML = `
-        <div class="empty-state">
-            <i class="fas fa-search"></i>
-            <h3>Nothing Here Yet</h3>
-            <p>${message}</p>
-        </div>
-    `;
+    itemsContainer.textContent = '';
+    const emptyDiv = document.createElement('div');
+    emptyDiv.className = 'empty-state';
+    const icon = document.createElement('i');
+    icon.className = 'fas fa-search';
+    emptyDiv.appendChild(icon);
+    const h3 = document.createElement('h3');
+    h3.textContent = 'Nothing Here Yet';
+    emptyDiv.appendChild(h3);
+    const p = document.createElement('p');
+    p.textContent = message;
+    emptyDiv.appendChild(p);
+    itemsContainer.appendChild(emptyDiv);
 }
 
 /**
  * Show error state
  */
 function showErrorState(message) {
-    itemsContainer.innerHTML = `
-        <div class="empty-state">
-            <i class="fas fa-exclamation-triangle"></i>
-            <h3>Error Loading Items</h3>
-            <p>${message}</p>
-        </div>
-    `;
+    itemsContainer.textContent = '';
+    const errorDiv = document.createElement('div');
+    errorDiv.className = 'empty-state';
+    const icon = document.createElement('i');
+    icon.className = 'fas fa-exclamation-triangle';
+    errorDiv.appendChild(icon);
+    const h3 = document.createElement('h3');
+    h3.textContent = 'Error Loading Items';
+    errorDiv.appendChild(h3);
+    const p = document.createElement('p');
+    p.textContent = message;
+    errorDiv.appendChild(p);
+    itemsContainer.appendChild(errorDiv);
 }
 
 /**
@@ -452,7 +492,11 @@ function showSuccessMessage(message) {
         box-shadow: 0 10px 30px rgba(0, 206, 201, 0.3);
         animation: slideInRight 0.3s ease forwards;
     `;
-    successDiv.innerHTML = `<i class="fas fa-check-circle"></i> ${message}`;
+    successDiv.textContent = '';
+    const icon = document.createElement('i');
+    icon.className = 'fas fa-check-circle';
+    successDiv.appendChild(icon);
+    successDiv.appendChild(document.createTextNode(' ' + message));
     
     document.body.appendChild(successDiv);
     

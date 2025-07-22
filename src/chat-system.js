@@ -319,14 +319,15 @@ function listenForMessages(chatId) {
 
     messageListener = onSnapshot(q, (querySnapshot) => {
         const messagesContainer = document.getElementById('chat-messages');
-        messagesContainer.innerHTML = '';
+        messagesContainer.textContent = '';
         
         if (querySnapshot.empty) {
-            messagesContainer.innerHTML = `
-                <div class="no-messages">
-                    <p>Start the conversation! 👋</p>
-                </div>
-            `;
+            const noMsgDiv = document.createElement('div');
+            noMsgDiv.className = 'no-messages';
+            const p = document.createElement('p');
+            p.textContent = 'Start the conversation! 👋';
+            noMsgDiv.appendChild(p);
+            messagesContainer.appendChild(noMsgDiv);
             return;
         }
         
@@ -363,13 +364,17 @@ function displayMessage(message, currentUserUid) {
     
     const messageElement = document.createElement('div');
     messageElement.className = `chat-message ${isOwnMessage ? 'own-message' : 'other-message'}`;
-    
-    messageElement.innerHTML = `
-        <div class="message-bubble">
-            <div class="message-text">${message.text}</div>
-            <div class="message-time">${timeString}</div>
-        </div>
-    `;
+    const bubbleDiv = document.createElement('div');
+    bubbleDiv.className = 'message-bubble';
+    const textDiv = document.createElement('div');
+    textDiv.className = 'message-text';
+    textDiv.textContent = message.text;
+    const timeDiv = document.createElement('div');
+    timeDiv.className = 'message-time';
+    timeDiv.textContent = timeString;
+    bubbleDiv.appendChild(textDiv);
+    bubbleDiv.appendChild(timeDiv);
+    messageElement.appendChild(bubbleDiv);
     
     messagesContainer.appendChild(messageElement);
 }

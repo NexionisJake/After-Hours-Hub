@@ -46,12 +46,14 @@ document.addEventListener('DOMContentLoaded', () => {
     if (googleLoginBtn) {
         googleLoginBtn.addEventListener('click', () => {
             // Show a loading state on the button
-            googleLoginBtn.innerHTML = `
-                <div class="spinner"></div>
-                <span>Authenticating...</span>
-            `;
+            googleLoginBtn.textContent = '';
+            const spinner = document.createElement('div');
+            spinner.className = 'spinner';
+            googleLoginBtn.appendChild(spinner);
+            const span = document.createElement('span');
+            span.textContent = 'Authenticating...';
+            googleLoginBtn.appendChild(span);
             googleLoginBtn.disabled = true;
-            
             signInWithGoogle();
         });
     }

@@ -288,28 +288,46 @@
 
             // ===== NEW: GOOGLE BUTTON LOADER =====
             googleLoginBtn.addEventListener('click', () => {
-                googleLoginBtn.innerHTML = `
-                    <div class="spinner"></div>
-                    <span style="color: var(--text-secondary);">Connecting...</span>
-                `;
+                googleLoginBtn.textContent = '';
+                const spinner = document.createElement('div');
+                spinner.className = 'spinner';
+                googleLoginBtn.appendChild(spinner);
+                const span = document.createElement('span');
+                span.style.color = 'var(--text-secondary)';
+                span.textContent = 'Connecting...';
+                googleLoginBtn.appendChild(span);
                 googleLoginBtn.disabled = true;
                 guestLoginBtn.disabled = true;
                 // The actual sign-in logic is handled by firebase-auth.js
             });
 
-            // Guest Login Handler
-            guestLoginBtn.addEventListener('click', () => {
-                console.warn('⚠️ SECURITY: Guest login bypasses authentication.');
-                
-                guestLoginBtn.innerHTML = `
-                    <div class="spinner dark"></div>
-                    <span>Redirecting...</span>
-                `;
-                guestLoginBtn.disabled = true;
-                googleLoginBtn.disabled = true;
+            // Guest Login Handler - DISABLED IN PRODUCTION
+            const isProduction = window.location.hostname !== 'localhost' && 
+                                window.location.hostname !== '127.0.0.1' &&
+                                !window.location.hostname.includes('github.io') &&
+                                !window.location.hostname.includes('netlify.app');
+            
+            if (isProduction) {
+                // Disable guest login in production
+                guestLoginBtn.style.display = 'none';
+                console.log('Guest login disabled in production environment');
+            } else {
+                guestLoginBtn.addEventListener('click', () => {
+                    console.warn('⚠️ SECURITY: Guest login bypasses authentication - DEVELOPMENT ONLY');
+                    
+                    guestLoginBtn.textContent = '';
+                    const spinner = document.createElement('div');
+                    spinner.className = 'spinner dark';
+                    guestLoginBtn.appendChild(spinner);
+                    const span = document.createElement('span');
+                    span.textContent = 'Redirecting...';
+                    guestLoginBtn.appendChild(span);
+                    guestLoginBtn.disabled = true;
+                    googleLoginBtn.disabled = true;
 
-                window.location.href = 'dashboard-clean.html';
-            });
+                    window.location.href = 'dashboard-clean.html';
+                });
+            }
         });
         
         // ===== NEW: PARALLAX HOVER EFFECT =====

@@ -69,7 +69,7 @@ function loadUserChats() {
  * @param {Array} chats - Array of chat objects
  */
 function renderChats(chats) {
-    chatsList.innerHTML = '';
+    chatsList.textContent = '';
 
     chats.forEach(chat => {
         const chatElement = createChatElement(chat);
@@ -101,32 +101,47 @@ function createChatElement(chat) {
     chatElement.className = 'chat-item';
     chatElement.onclick = () => openChat(chat.id, chat);
 
-    chatElement.innerHTML = `
-        <div class="chat-avatar">
-            ${otherUserInfo.avatar ? 
-                `<img src="${otherUserInfo.avatar}" alt="${otherUserInfo.name}">` : 
-                `<div class="avatar-placeholder">${otherUserInfo.name.charAt(0).toUpperCase()}</div>`
-            }
-        </div>
-        <div class="chat-info">
-            <div class="chat-header">
-                <div class="chat-name">${otherUserInfo.name}</div>
-                <div class="chat-time">${timeString}</div>
-            </div>
-            <div class="chat-item-title">
-                <span class="chat-type-badge chat-type-${chat.itemType || 'market'}">
-                    ${chat.itemType === 'assignment' ? '📚' : '🛒'} ${chat.itemType === 'assignment' ? 'Assignment' : 'Market'}
-                </span>
-                ${chat.itemTitle}
-            </div>
-            <div class="chat-last-message">
-                ${chat.lastMessage ? 
-                    `${chat.lastMessage.senderId === currentUserUid ? 'You: ' : ''}${chat.lastMessage.text}` : 
-                    'No messages yet'
-                }
-            </div>
-        </div>
-    `;
+    // Avatar
+    const avatarDiv = document.createElement('div');
+    avatarDiv.className = 'chat-avatar';
+    if (otherUserInfo.avatar) {
+        const img = document.createElement('img');
+        img.src = otherUserInfo.avatar;
+        img.alt = otherUserInfo.name;
+        avatarDiv.appendChild(img);
+    } else {
+        const placeholder = document.createElement('div');
+        placeholder.className = 'avatar-placeholder';
+        placeholder.textContent = otherUserInfo.name.charAt(0).toUpperCase();
+        avatarDiv.appendChild(placeholder);
+    }
+    chatElement.appendChild(avatarDiv);
+    // Info
+    const infoDiv = document.createElement('div');
+    infoDiv.className = 'chat-info';
+    const nameDiv = document.createElement('div');
+    nameDiv.className = 'chat-name';
+    nameDiv.textContent = otherUserInfo.name;
+    infoDiv.appendChild(nameDiv);
+    const lastMsgDiv = document.createElement('div');
+    lastMsgDiv.className = 'chat-last-message';
+    lastMsgDiv.textContent = chat.lastMessage?.text || '';
+    infoDiv.appendChild(lastMsgDiv);
+    chatElement.appendChild(infoDiv);
+    // Meta
+    const metaDiv = document.createElement('div');
+    metaDiv.className = 'chat-meta';
+    const timeSpan = document.createElement('span');
+    timeSpan.className = 'chat-time';
+    timeSpan.textContent = timeString;
+    metaDiv.appendChild(timeSpan);
+    if (chat.unreadCount) {
+        const unreadSpan = document.createElement('span');
+        unreadSpan.className = 'chat-unread';
+        unreadSpan.textContent = chat.unreadCount;
+        metaDiv.appendChild(unreadSpan);
+    }
+    chatElement.appendChild(metaDiv);
 
     return chatElement;
 }

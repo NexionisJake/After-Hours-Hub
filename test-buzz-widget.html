@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Buzz Widget</title>
+</head>
+<body>
+    <h1>Testing Dynamic Buzz Widget Functions</h1>
+    <div id="test-output"></div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+        import { 
+            getFirestore, 
+            collection, 
+            query, 
+            orderBy,
+            limit,
+            getDocs
+        } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+        import { firebaseConfig } from './src/firebase-config.js';
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        async function testCollectionExists(collectionName) {
+            try {
+                console.log(`Testing ${collectionName}...`);
+                const testQuery = query(
+                    collection(db, collectionName),
+                    orderBy('createdAt', 'desc'),
+                    limit(1)
+                );
+                const snapshot = await getDocs(testQuery);
+                console.log(`✅ ${collectionName}: ${snapshot.size} documents found`);
+                
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    console.log(`Sample data from ${collectionName}:`, {
+                        id: doc.id,
+                        createdAt: data.createdAt?.toDate?.() || data.createdAt,
+                        title: data.title || data.name || data.itemName || 'N/A'
+                    });
+                });
+                
+                return true;
+            } catch (error) {
+                console.error(`❌ Error with ${collectionName}:`, error);
+                return false;
+            }
+        }
+
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                console.log("User authenticated, testing collections...");
+                
+                const collections = ['assignmentRequests', 'marketListings', 'lostAndFoundItems'];
+                
+                for (const collectionName of collections) {
+                    await testCollectionExists(collectionName);
+                }
+                
+                console.log("Testing complete! Check console for results.");
+                const testOutput = document.getElementById('test-output');
+                testOutput.textContent = '';
+                const p1 = document.createElement('p');
+                p1.textContent = '✅ Test completed! Check browser console (F12) for detailed results.';
+                testOutput.appendChild(p1);
+                const p2 = document.createElement('p');
+                p2.textContent = `User: ${user.email}`;
+                testOutput.appendChild(p2);
+            } else {
+                console.log("Please sign in first");
+                const testOutput = document.getElementById('test-output');
+                testOutput.textContent = '';
+                const p = document.createElement('p');
+                p.textContent = '❌ Please sign in first. ';
+                const a = document.createElement('a');
+                a.href = 'src/login.html';
+                a.textContent = 'Go to login';
+                p.appendChild(a);
+                testOutput.appendChild(p);
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,3 +1,10 @@
+// CSRF token generation for form
+document.addEventListener('DOMContentLoaded', () => {
+    const csrfToken = crypto.randomUUID();
+    const csrfInputs = document.querySelectorAll('input[name="csrfToken"]');
+    csrfInputs.forEach(input => input.value = csrfToken);
+    window.csrfToken = csrfToken;
+});
 // src/assign-help.js
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
@@ -123,13 +130,27 @@ function validateDescription() {
 }
 
 function showValidationError(element, message) {
-    element.innerHTML = `<i class="ph-bold ph-warning-circle"></i> ${message}`;
+    // Clear previous content
+    element.textContent = '';
+    // Add icon
+    const icon = document.createElement('i');
+    icon.className = 'ph-bold ph-warning-circle';
+    element.appendChild(icon);
+    // Add message
+    element.appendChild(document.createTextNode(' ' + message));
     element.classList.add('error');
     element.classList.remove('success');
 }
 
 function showValidationSuccess(element, message) {
-    element.innerHTML = `<i class="ph-bold ph-check-circle"></i> ${message}`;
+    // Clear previous content
+    element.textContent = '';
+    // Add icon
+    const icon = document.createElement('i');
+    icon.className = 'ph-bold ph-check-circle';
+    element.appendChild(icon);
+    // Add message
+    element.appendChild(document.createTextNode(' ' + message));
     element.classList.remove('error');
     element.classList.add('success');
 }
@@ -216,7 +237,7 @@ function handleFileUpload(files) {
     // Simulate file upload progress
     if (files.length > 0) {
         const uploadedFiles = document.getElementById('uploaded-files');
-        uploadedFiles.innerHTML = '';
+        uploadedFiles.textContent = '';
         
         uploadProgressContainer.style.display = 'block';
         let progress = 0;
@@ -236,22 +257,34 @@ function handleFileUpload(files) {
                         const fileSize = (file.size / 1024).toFixed(1);
                         const fileElement = document.createElement('div');
                         fileElement.className = 'uploaded-file';
-                        fileElement.innerHTML = `
-                            <i class="ph-bold ph-file-text"></i>
-                            <div class="file-info">
-                                <div class="file-name">${DOMPurify.sanitize(file.name)}</div>
-                                <div class="file-size">${fileSize} KB</div>
-                            </div>
-                            <button type="button" class="btn-remove-file" aria-label="Remove file">
-                                <i class="ph-bold ph-x"></i>
-                            </button>
-                        `;
-                        
-                        const removeBtn = fileElement.querySelector('.btn-remove-file');
+                        // Add icon
+                        const icon = document.createElement('i');
+                        icon.className = 'ph-bold ph-file-text';
+                        fileElement.appendChild(icon);
+                        // Add file info
+                        const infoDiv = document.createElement('div');
+                        infoDiv.className = 'file-info';
+                        const nameDiv = document.createElement('div');
+                        nameDiv.className = 'file-name';
+                        nameDiv.textContent = file.name;
+                        const sizeDiv = document.createElement('div');
+                        sizeDiv.className = 'file-size';
+                        sizeDiv.textContent = `${fileSize} KB`;
+                        infoDiv.appendChild(nameDiv);
+                        infoDiv.appendChild(sizeDiv);
+                        fileElement.appendChild(infoDiv);
+                        // Add remove button
+                        const removeBtn = document.createElement('button');
+                        removeBtn.type = 'button';
+                        removeBtn.className = 'btn-remove-file';
+                        removeBtn.setAttribute('aria-label', 'Remove file');
+                        const removeIcon = document.createElement('i');
+                        removeIcon.className = 'ph-bold ph-x';
+                        removeBtn.appendChild(removeIcon);
                         removeBtn.addEventListener('click', () => {
                             fileElement.remove();
                         });
-                        
+                        fileElement.appendChild(removeBtn);
                         uploadedFiles.appendChild(fileElement);
                     });
                 }, 500);
@@ -321,7 +354,7 @@ if (newRequestForm) {
             // Reset form
             newRequestForm.reset();
             setDefaultDueDate();
-            document.getElementById('uploaded-files').innerHTML = '';
+            document.getElementById('uploaded-files').textContent = '';
             
             // Reset validation messages
             titleValidation.className = 'validation-message';
@@ -495,7 +528,7 @@ function updateActiveFiltersUI() {
     if (!hasActiveFilters) return;
     
     // Build filter badges
-    filterBadgesContainer.innerHTML = '';
+    filterBadgesContainer.textContent = '';
     
     if (activeFilters.search) {
         addFilterBadge(`Search: "${activeFilters.search}"`, () => {
@@ -555,18 +588,21 @@ function updateActiveFiltersUI() {
 function addFilterBadge(text, onRemove) {
     const badge = document.createElement('div');
     badge.className = 'filter-badge';
-    badge.innerHTML = `
-        ${DOMPurify.sanitize(text)}
-        <i class="ph-bold ph-x" role="button" aria-label="Remove filter"></i>
-    `;
-    
-    badge.querySelector('i').addEventListener('click', onRemove);
+    // Add text
+    badge.appendChild(document.createTextNode(text));
+    // Add remove icon
+    const removeIcon = document.createElement('i');
+    removeIcon.className = 'ph-bold ph-x';
+    removeIcon.setAttribute('role', 'button');
+    removeIcon.setAttribute('aria-label', 'Remove filter');
+    removeIcon.addEventListener('click', onRemove);
+    badge.appendChild(removeIcon);
     filterBadgesContainer.appendChild(badge);
 }
 
 function displayRequests(requests) {
     if (!requestsContainer) return;
-    requestsContainer.innerHTML = '';
+    requestsContainer.textContent = '';
     
     // Show empty state if no requests match the filters
     if (emptyStateContainer) {
@@ -639,31 +675,79 @@ function createRequestElement(request) {
              <i class="ph-bold ph-clock"></i> Open
            </span>`;
     
-    el.innerHTML = `
-        <div class="urgency-indicator ${urgencyClass}"></div>
-        <h3>${DOMPurify.sanitize(request.title)}</h3>
-        <p class="request-author">By: ${DOMPurify.sanitize(request.authorName || 'Anonymous')}</p>
-        <p class="request-description">${DOMPurify.sanitize(request.description || '')}</p>
-        
-        ${tagsHTML}
-        
-        <div class="request-badges">
-            ${paymentBadge}
-            <span class="badge badge-due ${daysUntilDue <= 1 ? 'urgent' : ''}">
-                <i class="ph-bold ph-calendar"></i> ${urgencyText}
-            </span>
-            ${statusBadge}
-        </div>
-        
-        <div class="request-meta">
-            <i class="ph-bold ph-calendar-check"></i> Due: ${formattedDueDate}
-        </div>
-        
-        <button class="view-details-btn offer-help-btn">
-            <i class="ph-bold ph-chat-centered-text"></i>
-            Offer Help
-        </button>
-    `;
+    // Clear previous content
+    el.textContent = '';
+    // Urgency indicator
+    const urgencyDiv = document.createElement('div');
+    urgencyDiv.className = `urgency-indicator ${urgencyClass}`;
+    el.appendChild(urgencyDiv);
+    // Title
+    const titleH3 = document.createElement('h3');
+    titleH3.textContent = request.title;
+    el.appendChild(titleH3);
+    // Author
+    const authorP = document.createElement('p');
+    authorP.className = 'request-author';
+    authorP.textContent = `By: ${request.authorName || 'Anonymous'}`;
+    el.appendChild(authorP);
+    // Description
+    const descP = document.createElement('p');
+    descP.className = 'request-description';
+    descP.textContent = request.description || '';
+    el.appendChild(descP);
+    // Tags
+    if (tagsHTML) {
+        const tagsDiv = document.createElement('div');
+        tagsDiv.className = 'tags';
+        if (Array.isArray(request.tags)) {
+            request.tags.forEach(tag => {
+                const tagSpan = document.createElement('span');
+                tagSpan.className = 'tag';
+                tagSpan.textContent = tag;
+                tagsDiv.appendChild(tagSpan);
+            });
+        }
+        el.appendChild(tagsDiv);
+    }
+    // Badges
+    const badgesDiv = document.createElement('div');
+    badgesDiv.className = 'request-badges';
+    if (paymentBadge) {
+        const paymentSpan = document.createElement('span');
+        paymentSpan.className = 'badge badge-payment';
+        paymentSpan.textContent = paymentBadge.replace(/<[^>]+>/g, ''); // Remove any HTML tags
+        badgesDiv.appendChild(paymentSpan);
+    }
+    const dueSpan = document.createElement('span');
+    dueSpan.className = `badge badge-due ${daysUntilDue <= 1 ? 'urgent' : ''}`;
+    const calIcon = document.createElement('i');
+    calIcon.className = 'ph-bold ph-calendar';
+    dueSpan.appendChild(calIcon);
+    dueSpan.appendChild(document.createTextNode(` ${urgencyText}`));
+    badgesDiv.appendChild(dueSpan);
+    if (statusBadge) {
+        const statusSpan = document.createElement('span');
+        statusSpan.className = 'badge badge-status';
+        statusSpan.textContent = statusBadge.replace(/<[^>]+>/g, ''); // Remove any HTML tags
+        badgesDiv.appendChild(statusSpan);
+    }
+    el.appendChild(badgesDiv);
+    // Meta
+    const metaDiv = document.createElement('div');
+    metaDiv.className = 'request-meta';
+    const metaIcon = document.createElement('i');
+    metaIcon.className = 'ph-bold ph-calendar-check';
+    metaDiv.appendChild(metaIcon);
+    metaDiv.appendChild(document.createTextNode(` Due: ${formattedDueDate}`));
+    el.appendChild(metaDiv);
+    // Offer Help button
+    const offerBtn = document.createElement('button');
+    offerBtn.className = 'view-details-btn offer-help-btn';
+    const chatIcon = document.createElement('i');
+    chatIcon.className = 'ph-bold ph-chat-centered-text';
+    offerBtn.appendChild(chatIcon);
+    offerBtn.appendChild(document.createTextNode(' Offer Help'));
+    el.appendChild(offerBtn);
     
     // Add event listener to the "Offer Help" button
     const offerHelpButton = el.querySelector('.view-details-btn');

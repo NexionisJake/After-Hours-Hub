@@ -213,7 +213,11 @@ async function loadNotifications() {
     if (!userId) return;
     
     const notificationList = document.getElementById('notification-list');
-    notificationList.innerHTML = '<div class="notification-loading">Loading...</div>';
+    notificationList.textContent = '';
+    const loadingDiv = document.createElement('div');
+    loadingDiv.className = 'notification-loading';
+    loadingDiv.textContent = 'Loading...';
+    notificationList.appendChild(loadingDiv);
     
     try {
         const notificationsRef = collection(db, "notifications");
@@ -225,17 +229,20 @@ async function loadNotifications() {
         );
         
         const snapshot = await getDocs(q);
-        notificationList.innerHTML = '';
+        notificationList.textContent = '';
         
         const notificationsToMarkAsRead = [];
         
         if (snapshot.empty) {
-            notificationList.innerHTML = `
-                <div class="no-notifications">
-                    <p>No notifications yet</p>
-                    <small>You'll see notifications here when someone sends you messages</small>
-                </div>
-            `;
+            const noDiv = document.createElement('div');
+            noDiv.className = 'no-notifications';
+            const p = document.createElement('p');
+            p.textContent = 'No notifications yet';
+            const small = document.createElement('small');
+            small.textContent = "You'll see notifications here when someone sends you messages";
+            noDiv.appendChild(p);
+            noDiv.appendChild(small);
+            notificationList.appendChild(noDiv);
             return;
         }
         
@@ -261,12 +268,16 @@ async function loadNotifications() {
         
     } catch (error) {
         console.warn('Could not load notifications:', error.message);
-        notificationList.innerHTML = `
-            <div class="no-notifications">
-                <p>Notifications not available</p>
-                <small>The notification system is being set up</small>
-            </div>
-        `;
+        notificationList.textContent = '';
+        const noDiv = document.createElement('div');
+        noDiv.className = 'no-notifications';
+        const p = document.createElement('p');
+        p.textContent = 'Notifications not available';
+        const small = document.createElement('small');
+        small.textContent = 'The notification system is being set up';
+        noDiv.appendChild(p);
+        noDiv.appendChild(small);
+        notificationList.appendChild(noDiv);
     }
 }
 
@@ -283,20 +294,34 @@ function createNotificationElement(notification) {
     const timestamp = notification.createdAt?.toDate?.() || new Date();
     const timeString = formatRelativeTime(timestamp);
     
-    notificationEl.innerHTML = `
-        <div class="notification-content">
-            <div class="notification-icon">
-                <i class="ph-fill ph-chat-circle"></i>
-            </div>
-            <div class="notification-text">
-                <p class="notification-message">
-                    <strong>${notification.senderName}</strong> sent you a message about 
-                    <span class="item-title">"${notification.relatedItemTitle}"</span>
-                </p>
-                <p class="notification-time">${timeString}</p>
-            </div>
-        </div>
-    `;
+    // Build notification content safely
+    const contentDiv = document.createElement('div');
+    contentDiv.className = 'notification-content';
+    const iconDiv = document.createElement('div');
+    iconDiv.className = 'notification-icon';
+    const icon = document.createElement('i');
+    icon.className = 'ph-fill ph-chat-circle';
+    iconDiv.appendChild(icon);
+    contentDiv.appendChild(iconDiv);
+    const textDiv = document.createElement('div');
+    textDiv.className = 'notification-text';
+    const messageP = document.createElement('p');
+    messageP.className = 'notification-message';
+    const strong = document.createElement('strong');
+    strong.textContent = notification.senderName;
+    messageP.appendChild(strong);
+    messageP.appendChild(document.createTextNode(' sent you a message about '));
+    const itemSpan = document.createElement('span');
+    itemSpan.className = 'item-title';
+    itemSpan.textContent = `"${notification.relatedItemTitle}"`;
+    messageP.appendChild(itemSpan);
+    textDiv.appendChild(messageP);
+    const timeP = document.createElement('p');
+    timeP.className = 'notification-time';
+    timeP.textContent = timeString;
+    textDiv.appendChild(timeP);
+    contentDiv.appendChild(textDiv);
+    notificationEl.appendChild(contentDiv);
     
     // Add click handler to navigate to chat
     notificationEl.addEventListener('click', () => {

@@ -160,6 +160,7 @@
         <div class="form-card">
             <h2><i class="ph-bold ph-tag"></i>List an Item for Sale</h2>
             <form id="new-item-form">
+                <input type="hidden" id="csrf-token" name="csrfToken" value="">
                 <div class="form-group">
                     <label for="item-name">Item Name</label>
                     <input type="text" id="item-name" placeholder="e.g., Electric Kettle" required>
@@ -233,21 +234,33 @@
                 // Show a more user-friendly error message on the page
                 const marketContainer = document.getElementById('market-container');
                 if (marketContainer) {
-                    marketContainer.innerHTML = `
-                        <div style="grid-column: 1 / -1; text-align: center; color: #ff6b6b; padding: 2rem;">
-                            <i class="ph ph-warning-circle" style="font-size: 2rem; display: block; margin-bottom: 1rem;"></i>
-                            <p>We're having trouble connecting to our services. This might be due to:</p>
-                            <ul style="text-align: left; margin: 1rem 0; display: inline-block;">
-                                <li>Network connectivity issues</li>
-                                <li>Temporary service outage</li>
-                                <li>Browser permission issues</li>
-                            </ul>
-                            <p>Please try refreshing the page or checking back later.</p>
-                            <button onclick="location.reload()" style="margin-top: 1rem; padding: 0.5rem 1rem; background: var(--primary-accent); color: white; border: none; border-radius: 4px; cursor: pointer;">
-                                Refresh Page
-                            </button>
-                        </div>
-                    `;
+                    marketContainer.textContent = '';
+                    const errorDiv = document.createElement('div');
+                    errorDiv.style.cssText = 'grid-column: 1 / -1; text-align: center; color: #ff6b6b; padding: 2rem;';
+                    const icon = document.createElement('i');
+                    icon.className = 'ph ph-warning-circle';
+                    icon.style.cssText = 'font-size: 2rem; display: block; margin-bottom: 1rem;';
+                    errorDiv.appendChild(icon);
+                    const p1 = document.createElement('p');
+                    p1.textContent = "We're having trouble connecting to our services. This might be due to:";
+                    errorDiv.appendChild(p1);
+                    const ul = document.createElement('ul');
+                    ul.style.cssText = 'text-align: left; margin: 1rem 0; display: inline-block;';
+                    ['Network connectivity issues', 'Temporary service outage', 'Browser permission issues'].forEach(text => {
+                        const li = document.createElement('li');
+                        li.textContent = text;
+                        ul.appendChild(li);
+                    });
+                    errorDiv.appendChild(ul);
+                    const p2 = document.createElement('p');
+                    p2.textContent = 'Please try refreshing the page or checking back later.';
+                    errorDiv.appendChild(p2);
+                    const btn = document.createElement('button');
+                    btn.textContent = 'Refresh Page';
+                    btn.onclick = () => location.reload();
+                    btn.style.cssText = 'margin-top: 1rem; padding: 0.5rem 1rem; background: var(--primary-accent); color: white; border: none; border-radius: 4px; cursor: pointer;';
+                    errorDiv.appendChild(btn);
+                    marketContainer.appendChild(errorDiv);
                 }
                 
                 const marketLoading = document.getElementById('market-loading');

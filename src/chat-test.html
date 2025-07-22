@@ -84,17 +84,23 @@
             const statusDiv = document.getElementById('test-status');
             if (user) {
                 currentUser = user;
-                statusDiv.innerHTML = `
-                    <div style="color: green; margin-top: 1rem;">
-                        ✅ Logged in as: ${user.displayName || user.email}
-                    </div>
-                `;
+                statusDiv.textContent = '';
+                const div = document.createElement('div');
+                div.style.color = 'green';
+                div.style.marginTop = '1rem';
+                div.textContent = `✅ Logged in as: ${user.displayName || user.email}`;
+                statusDiv.appendChild(div);
             } else {
-                statusDiv.innerHTML = `
-                    <div style="color: red; margin-top: 1rem;">
-                        ❌ Not logged in. <a href="login.html">Click here to login</a>
-                    </div>
-                `;
+                statusDiv.textContent = '';
+                const div = document.createElement('div');
+                div.style.color = 'red';
+                div.style.marginTop = '1rem';
+                div.textContent = '❌ Not logged in. ';
+                const a = document.createElement('a');
+                a.href = 'login.html';
+                a.textContent = 'Click here to login';
+                div.appendChild(a);
+                statusDiv.appendChild(div);
             }
         });
 
