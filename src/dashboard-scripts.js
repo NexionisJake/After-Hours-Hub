@@ -12,6 +12,9 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import { firebaseConfig } from './firebase-config.js';
 
+// Import notification system
+import './notification-system.js';
+
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
@@ -232,7 +235,6 @@ document.addEventListener('DOMContentLoaded', () => {
     let clockIntervalId = null;
     let notificationIntervalId = null;
     let isDarkMode = true;
-    let isDropdownOpen = false;
     let searchTimeout;
 
     // --- 1. DYNAMIC CLOCK AND DATE ---
@@ -376,50 +378,20 @@ document.addEventListener('DOMContentLoaded', () => {
         }, 300);
     });
 
-    // --- 6. NOTIFICATION SYSTEM (Enhanced with missing styles) ---
-    const notificationDropdown = document.createElement('div');
-    notificationDropdown.className = 'notification-dropdown';
-    notificationDropdown.innerHTML = `<div style="padding: 1rem; text-align: center; color: var(--text-secondary);">No new notifications.</div>`;
-    
-    // Ensure notification bell has relative positioning
-    elements.notificationBell.style.position = 'relative';
-    elements.notificationBell.appendChild(notificationDropdown);
-    
-    function closeDropdown() {
-        isDropdownOpen = false;
-        notificationDropdown.classList.remove('show');
-    }
-
-    elements.notificationBell.addEventListener('click', (e) => {
-        e.stopPropagation();
-        isDropdownOpen = !isDropdownOpen;
-        if (isDropdownOpen) {
-            notificationDropdown.classList.add('show');
-        } else {
-            closeDropdown();
-        }
-    });
-    
+    // --- 6. NOTIFICATION SYSTEM ---
+    // Note: Notification functionality is handled by notification-system.js
     // Add keyboard support for notification bell
-    elements.notificationBell.addEventListener('keydown', (e) => {
+    elements.notificationBell?.addEventListener('keydown', (e) => {
         if (e.key === 'Enter' || e.key === ' ') {
             e.preventDefault();
             elements.notificationBell.click();
         }
     });
-    
-    document.addEventListener('click', closeDropdown);
 
     // --- 7. PROFILE DROPDOWN FUNCTIONALITY ---
     elements.profileDropdownBtn?.addEventListener('click', (e) => {
         e.stopPropagation();
         const isHidden = elements.profileDropdown?.classList.contains('hidden');
-        
-        // Close notification dropdown if open
-        if (notificationDropdown) {
-            notificationDropdown.classList.remove('show');
-            isDropdownOpen = false;
-        }
         
         elements.profileDropdown?.classList.toggle('hidden');
         

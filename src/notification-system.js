@@ -1,0 +1,378 @@
+// src/notification-system.js
+// Real-time Notification System for After Hours Hub
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { 
+    getFirestore, 
+    collection, 
+    query, 
+    where, 
+    orderBy, 
+    onSnapshot, 
+    getDocs, 
+    writeBatch,
+    limit
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { firebaseConfig } from './firebase-config.js';
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+// Notification system state
+let notificationListener = null;
+let notificationPanel = null;
+let bellIcon = null;
+let notificationBadge = null;
+
+/**
+ * Initialize the notification system
+ */
+export function initializeNotificationSystem() {
+    // Wait for DOM to be ready
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', setupNotificationElements);
+    } else {
+        setupNotificationElements();
+    }
+    
+    // Listen for auth state changes
+    onAuthStateChanged(auth, (user) => {
+        if (user) {
+            startNotificationListener(user.uid);
+        } else {
+            stopNotificationListener();
+            clearNotificationUI();
+        }
+    });
+}
+
+/**
+ * Set up notification UI elements
+ */
+function setupNotificationElements() {
+    bellIcon = document.querySelector('.notification-bell');
+    notificationBadge = document.querySelector('.notification-badge');
+    
+    if (bellIcon) {
+        // Add click event listener to bell icon
+        bellIcon.addEventListener('click', toggleNotificationPanel);
+        bellIcon.style.cursor = 'pointer';
+        
+        // Create notification panel if it doesn't exist
+        createNotificationPanel();
+    }
+}
+
+/**
+ * Start listening for unread notifications
+ * @param {string} userId - The user's UID
+ */
+function startNotificationListener(userId) {
+    if (notificationListener) {
+        notificationListener(); // Unsubscribe existing listener
+    }
+    
+    const notificationsRef = collection(db, "notifications");
+    const q = query(
+        notificationsRef,
+        where("recipientId", "==", userId),
+        where("isRead", "==", false),
+        orderBy("createdAt", "desc")
+    );
+
+    notificationListener = onSnapshot(q, (snapshot) => {
+        const unreadCount = snapshot.size;
+        updateNotificationBadge(unreadCount);
+        console.log(`Found ${unreadCount} unread notifications`);
+    }, (error) => {
+        console.warn('Notifications not available yet:', error.message);
+        // Don't show error to user, just hide the notification badge
+        updateNotificationBadge(0);
+    });
+}
+
+/**
+ * Stop the notification listener
+ */
+function stopNotificationListener() {
+    if (notificationListener) {
+        notificationListener();
+        notificationListener = null;
+    }
+}
+
+/**
+ * Update the notification badge
+ * @param {number} count - Number of unread notifications
+ */
+function updateNotificationBadge(count) {
+    if (!notificationBadge) return;
+    
+    if (count > 0) {
+        notificationBadge.textContent = count > 9 ? '9+' : count.toString();
+        notificationBadge.style.display = 'block';
+        bellIcon?.classList.add('has-unread');
+    } else {
+        notificationBadge.style.display = 'none';
+        bellIcon?.classList.remove('has-unread');
+    }
+}
+
+/**
+ * Clear notification UI
+ */
+function clearNotificationUI() {
+    updateNotificationBadge(0);
+}
+
+/**
+ * Create the notification panel
+ */
+function createNotificationPanel() {
+    // Remove existing panel if it exists
+    const existingPanel = document.getElementById('notification-panel');
+    if (existingPanel) {
+        existingPanel.remove();
+    }
+    
+    const panelHtml = `
+        <div id="notification-panel" class="notification-panel hidden">
+            <div class="notification-header">
+                <h3>Notifications</h3>
+                <button id="mark-all-read-btn" class="mark-all-read-btn">Mark All Read</button>
+            </div>
+            <div id="notification-list" class="notification-list">
+                <div class="notification-loading">Loading...</div>
+            </div>
+        </div>
+    `;
+    
+    document.body.insertAdjacentHTML('beforeend', panelHtml);
+    notificationPanel = document.getElementById('notification-panel');
+    
+    // Add event listeners
+    document.getElementById('mark-all-read-btn').addEventListener('click', markAllNotificationsAsRead);
+    
+    // Close panel when clicking outside
+    document.addEventListener('click', (e) => {
+        if (notificationPanel && !notificationPanel.contains(e.target) && !bellIcon?.contains(e.target)) {
+            hideNotificationPanel();
+        }
+    });
+}
+
+/**
+ * Toggle notification panel visibility
+ */
+async function toggleNotificationPanel() {
+    if (!notificationPanel) return;
+    
+    if (notificationPanel.classList.contains('hidden')) {
+        await showNotificationPanel();
+    } else {
+        hideNotificationPanel();
+    }
+}
+
+/**
+ * Show notification panel and load notifications
+ */
+async function showNotificationPanel() {
+    if (!notificationPanel || !auth.currentUser) return;
+    
+    notificationPanel.classList.remove('hidden');
+    
+    // Position the panel near the bell icon
+    if (bellIcon) {
+        const rect = bellIcon.getBoundingClientRect();
+        notificationPanel.style.position = 'absolute';
+        notificationPanel.style.top = `${rect.bottom + 10}px`;
+        notificationPanel.style.right = '20px';
+    }
+    
+    await loadNotifications();
+}
+
+/**
+ * Hide notification panel
+ */
+function hideNotificationPanel() {
+    if (notificationPanel) {
+        notificationPanel.classList.add('hidden');
+    }
+}
+
+/**
+ * Load and display notifications
+ */
+async function loadNotifications() {
+    const userId = auth.currentUser?.uid;
+    if (!userId) return;
+    
+    const notificationList = document.getElementById('notification-list');
+    notificationList.innerHTML = '<div class="notification-loading">Loading...</div>';
+    
+    try {
+        const notificationsRef = collection(db, "notifications");
+        const q = query(
+            notificationsRef,
+            where("recipientId", "==", userId),
+            orderBy("createdAt", "desc"),
+            limit(10)
+        );
+        
+        const snapshot = await getDocs(q);
+        notificationList.innerHTML = '';
+        
+        const notificationsToMarkAsRead = [];
+        
+        if (snapshot.empty) {
+            notificationList.innerHTML = `
+                <div class="no-notifications">
+                    <p>No notifications yet</p>
+                    <small>You'll see notifications here when someone sends you messages</small>
+                </div>
+            `;
+            return;
+        }
+        
+        snapshot.forEach(doc => {
+            const notification = doc.data();
+            const notificationEl = createNotificationElement(notification);
+            notificationList.appendChild(notificationEl);
+            
+            // Collect unread notifications to mark as read
+            if (!notification.isRead) {
+                notificationsToMarkAsRead.push(doc.ref);
+            }
+        });
+        
+        // Mark displayed notifications as read
+        if (notificationsToMarkAsRead.length > 0) {
+            const batch = writeBatch(db);
+            notificationsToMarkAsRead.forEach(ref => {
+                batch.update(ref, { isRead: true });
+            });
+            await batch.commit();
+        }
+        
+    } catch (error) {
+        console.warn('Could not load notifications:', error.message);
+        notificationList.innerHTML = `
+            <div class="no-notifications">
+                <p>Notifications not available</p>
+                <small>The notification system is being set up</small>
+            </div>
+        `;
+    }
+}
+
+/**
+ * Create a notification element
+ * @param {Object} notification - The notification data
+ * @returns {HTMLElement} The notification element
+ */
+function createNotificationElement(notification) {
+    const notificationEl = document.createElement('div');
+    notificationEl.className = `notification-item ${notification.isRead ? 'read' : 'unread'}`;
+    
+    // Format timestamp
+    const timestamp = notification.createdAt?.toDate?.() || new Date();
+    const timeString = formatRelativeTime(timestamp);
+    
+    notificationEl.innerHTML = `
+        <div class="notification-content">
+            <div class="notification-icon">
+                <i class="ph-fill ph-chat-circle"></i>
+            </div>
+            <div class="notification-text">
+                <p class="notification-message">
+                    <strong>${notification.senderName}</strong> sent you a message about 
+                    <span class="item-title">"${notification.relatedItemTitle}"</span>
+                </p>
+                <p class="notification-time">${timeString}</p>
+            </div>
+        </div>
+    `;
+    
+    // Add click handler to navigate to chat
+    notificationEl.addEventListener('click', () => {
+        if (notification.chatId) {
+            window.location.href = `chats.html?chatId=${notification.chatId}`;
+        }
+        hideNotificationPanel();
+    });
+    
+    return notificationEl;
+}
+
+/**
+ * Mark all notifications as read
+ */
+async function markAllNotificationsAsRead() {
+    const userId = auth.currentUser?.uid;
+    if (!userId) return;
+    
+    try {
+        const notificationsRef = collection(db, "notifications");
+        const q = query(
+            notificationsRef,
+            where("recipientId", "==", userId),
+            where("isRead", "==", false)
+        );
+        
+        const snapshot = await getDocs(q);
+        
+        if (!snapshot.empty) {
+            const batch = writeBatch(db);
+            snapshot.forEach(doc => {
+                batch.update(doc.ref, { isRead: true });
+            });
+            await batch.commit();
+        }
+        
+        // Refresh the panel
+        await loadNotifications();
+        
+    } catch (error) {
+        console.warn('Could not mark notifications as read:', error.message);
+    }
+}
+
+/**
+ * Format relative time
+ * @param {Date} date - The date to format
+ * @returns {string} Formatted relative time string
+ */
+function formatRelativeTime(date) {
+    const now = new Date();
+    const diffMs = now - date;
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+    
+    if (diffMins < 1) {
+        return 'Just now';
+    } else if (diffMins < 60) {
+        return `${diffMins} minute${diffMins !== 1 ? 's' : ''} ago`;
+    } else if (diffHours < 24) {
+        return `${diffHours} hour${diffHours !== 1 ? 's' : ''} ago`;
+    } else if (diffDays < 7) {
+        return `${diffDays} day${diffDays !== 1 ? 's' : ''} ago`;
+    } else {
+        return date.toLocaleDateString();
+    }
+}
+
+// Auto-initialize when module is loaded
+initializeNotificationSystem();
+
+// Export functions for external use
+export { 
+    startNotificationListener, 
+    stopNotificationListener, 
+    updateNotificationBadge 
+};

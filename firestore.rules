@@ -64,6 +64,21 @@ service cloud.firestore {
         allow read, write: if isSignedIn();
       }
     }
+
+    // Rules for Notifications System
+    match /notifications/{notificationId} {
+      // A user can only read their own notifications.
+      allow read: if isSignedIn() && resource.data.recipientId == request.auth.uid;
+
+      // A user can create a notification if they are the sender.
+      allow create: if isSignedIn() && request.resource.data.senderId == request.auth.uid;
+
+      // A user can only update their own notifications (e.g., to mark as read).
+      allow update: if isSignedIn() && resource.data.recipientId == request.auth.uid;
+
+      // Prevent deletion.
+      allow delete: if false;
+    }
   }
 }
   

@@ -16,7 +16,9 @@ import {
     onSnapshot, 
     serverTimestamp,
     where,
-    getDocs
+    getDocs,
+    writeBatch,
+    limit
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import { firebaseConfig } from './firebase-config.js';
 import { handleError, sanitizeText } from './security-utils.js';
@@ -266,6 +268,14 @@ window.sendMessage = async function() {
         // Sanitize the message text
         const sanitizedText = sanitizeText(text);
         
+        // Get chat data to find the recipient
+        const chatDocRef = doc(db, "chats", activeChatId);
+        const chatSnap = await getDoc(chatDocRef);
+        const chatData = chatSnap.data();
+        
+        // Find the recipient (the other participant)
+        const recipientUid = chatData.participants.find(p => p !== currentUserUid);
+        
         // Add the new message to the subcollection
         await addDoc(messagesColRef, {
             senderId: currentUserUid,
@@ -274,7 +284,6 @@ window.sendMessage = async function() {
         });
 
         // Update the 'lastMessage' field on the parent chat document
-        const chatDocRef = doc(db, "chats", activeChatId);
         await updateDoc(chatDocRef, {
             lastMessage: { 
                 text: sanitizedText, 
@@ -283,6 +292,11 @@ window.sendMessage = async function() {
             },
             updatedAt: serverTimestamp()
         });
+        
+        // Create notification for the recipient (if not sending to self)
+        if (recipientUid && recipientUid !== currentUserUid) {
+            await createNotification(recipientUid, currentUserUid, chatData, activeChatId);
+        }
         
         // Clear input
         messageInput.value = '';
@@ -430,6 +444,38 @@ export function listenToUserChats(callback) {
         }));
         callback(chats);
     });
+}
+
+/**
+ * Create a notification for a user
+ * @param {string} recipientUid - The user who should receive the notification
+ * @param {string} senderUid - The user who triggered the notification
+ * @param {Object} chatData - The chat document data
+ * @param {string} chatId - The chat ID
+ */
+async function createNotification(recipientUid, senderUid, chatData, chatId) {
+    try {
+        const currentUser = auth.currentUser;
+        const senderName = currentUser.displayName || currentUser.email?.split('@')[0] || 'Someone';
+        
+        const notificationsRef = collection(db, "notifications");
+        await addDoc(notificationsRef, {
+            recipientId: recipientUid,
+            senderId: senderUid,
+            senderName: senderName,
+            type: "NEW_CHAT_MESSAGE",
+            isRead: false,
+            relatedItemId: chatData.itemId || '',
+            relatedItemTitle: chatData.itemTitle || 'Chat',
+            chatId: chatId,
+            createdAt: serverTimestamp()
+        });
+        
+        console.log('Notification created successfully');
+    } catch (error) {
+        console.error('Error creating notification:', error);
+        // Don't throw error to avoid disrupting message sending
+    }
 }
 
 // Export the main function for global access

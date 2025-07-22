@@ -7,6 +7,9 @@ import { firebaseConfig, cloudinaryConfig } from './firebase-config.js';
 import { handleError, validateInput, requestRateLimit, sanitizeText, messagingRateLimit } from './security-utils.js';
 import { initiateChat } from './chat-system.js';
 
+// Import notification system
+import './notification-system.js';
+
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);

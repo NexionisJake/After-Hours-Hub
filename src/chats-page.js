@@ -6,6 +6,9 @@ import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/
 import { firebaseConfig } from './firebase-config.js';
 import { getUserChats, listenToUserChats } from './chat-system.js';
 
+// Import notification system
+import './notification-system.js';
+
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
