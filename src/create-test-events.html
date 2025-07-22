@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <!-- Security: Content Security Policy -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://www.gstatic.com https://unpkg.com https://firestore.googleapis.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://fonts.gstatic.com https://cdn.jsdelivr.net https://unpkg.com; font-src 'self' https://fonts.gstatic.com https://cdn.jsdelivr.net https://unpkg.com; img-src 'self' data: https: blob:; connect-src 'self' https://firestore.googleapis.com https://firebase.googleapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com wss://*.firebaseio.com ws://127.0.0.1:* ws://localhost:*;">
+    
+    <title>Create Test Events - After Hours Hub</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    
+    <style>
+        /* ===== DASHBOARD THEME INTEGRATION ===== */
+        :root {
+            --bg-color: #0B0E1A;
+            --primary-accent: #FFD93D;
+            --secondary-accent: #6C5CE7;
+            --tertiary-accent: #FD79A8;
+            --success-color: #00CEC9;
+            --text-color: #F0F2F5;
+            --text-secondary: #B8BCC8;
+            --glass-bg: rgba(20, 25, 40, 0.75);
+            --glass-border: rgba(255, 255, 255, 0.15);
+            --shadow-color: rgba(0, 0, 0, 0.5);
+            --font-family: 'Poppins', sans-serif;
+            --danger-color: #FF6B6B;
+            --warning-color: #FDCB6E;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            transition: background-color 0.5s ease, color 0.5s ease, border-color 0.5s ease;
+        }
+
+        body {
+            font-family: var(--font-family);
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            min-height: 100vh;
+            /* Enhanced background with animated gradient */
+            background: linear-gradient(-45deg, #0B0E1A, #1A1F3A, #0B0E1A, #151B2E);
+            background-size: 400% 400%;
+            animation: gradientShift 15s ease infinite;
+            overflow-x: hidden;
+        }
+
+        /* Subtle background pattern */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: radial-gradient(rgba(255,215,61,0.08) 1px, transparent 1px);
+            background-size: 40px 40px;
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--primary-accent);
+            border-radius: 4px;
+        }
+
+        ::selection {
+            background: var(--primary-accent);
+            color: var(--bg-color);
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 2rem;
+            position: relative;
+            z-index: 1;
+            animation: fadeInUp 0.6s ease-out;
+        }
+
+        .main-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
+            border-radius: 25px;
+            padding: 2rem;
+            box-shadow: 0 8px 32px 0 var(--shadow-color);
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .main-card::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(255, 217, 61, 0.05);
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+            z-index: 0;
+        }
+
+        .main-card:hover::before {
+            width: 600px;
+            height: 600px;
+        }
+
+        .main-card > * {
+            position: relative;
+            z-index: 1;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--primary-accent);
+            margin-bottom: 1.5rem;
+            text-shadow: 0 0 20px rgba(255, 217, 61, 0.3);
+        }
+
+        .info-card {
+            background: linear-gradient(135deg, 
+                rgba(255, 217, 61, 0.1) 0%, 
+                rgba(108, 92, 231, 0.1) 100%);
+            border: 1px solid var(--glass-border);
+            padding: 1.5rem;
+            border-radius: 20px;
+            margin: 1.5rem 0;
+            backdrop-filter: blur(8px);
+        }
+
+        .info-card strong {
+            color: var(--primary-accent);
+        }
+
+        .info-card ul {
+            text-align: left;
+            max-width: 500px;
+            margin: 1rem auto 0;
+            color: var(--text-secondary);
+        }
+
+        .info-card li {
+            margin: 0.5rem 0;
+            padding-left: 1rem;
+            position: relative;
+        }
+
+        .info-card li::before {
+            content: '🎯';
+            position: absolute;
+            left: 0;
+        }
+
+        .status-section {
+            margin: 2rem 0;
+            min-height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .user-section {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 1.5rem;
+            margin: 1rem 0;
+            backdrop-filter: blur(8px);
+        }
+
+        .user-email {
+            color: var(--primary-accent);
+            font-weight: 600;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.5rem;
+            margin: 0.5rem;
+            border: none;
+            border-radius: 20px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.2);
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+            z-index: 0;
+        }
+
+        .btn:hover::before {
+            width: 200px;
+            height: 200px;
+        }
+
+        .btn > * {
+            position: relative;
+            z-index: 1;
+        }
+
+        .btn-primary {
+            background: var(--primary-accent);
+            color: var(--bg-color);
+        }
+
+        .btn-secondary {
+            background: var(--secondary-accent);
+            color: white;
+        }
+
+        .btn-success {
+            background: var(--success-color);
+            color: var(--bg-color);
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+        }
+
+        .btn-primary:hover {
+            box-shadow: 0 8px 25px rgba(255, 217, 61, 0.3);
+        }
+
+        .btn-secondary:hover {
+            box-shadow: 0 8px 25px rgba(108, 92, 231, 0.3);
+        }
+
+        .btn-success:hover {
+            box-shadow: 0 8px 25px rgba(0, 206, 201, 0.3);
+        }
+
+        .status {
+            padding: 1rem 1.5rem;
+            border-radius: 15px;
+            margin: 1rem 0;
+            font-weight: 500;
+        }
+
+        .status.success {
+            background: linear-gradient(135deg, var(--success-color), #00b894);
+            color: var(--bg-color);
+        }
+
+        .status.error {
+            background: linear-gradient(135deg, var(--danger-color), #e84393);
+            color: white;
+        }
+
+        .status.info {
+            background: linear-gradient(135deg, var(--secondary-accent), #74b9ff);
+            color: white;
+        }
+
+        .loading-text {
+            color: var(--text-secondary);
+            font-style: italic;
+        }
+
+        .auth-loading {
+            color: var(--primary-accent);
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+            
+            .main-card {
+                padding: 1.5rem;
+            }
+
+            h1 {
+                font-size: 2rem;
+            }
+
+            .btn {
+                width: 100%;
+                justify-content: center;
+                margin: 0.25rem 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="main-card">
+            <h1>🧪 Test Event Creator</h1>
+            
+            <div class="info-card">
+                <strong>Purpose:</strong> This page creates sample events for testing the events system.
+                <br><br>
+                <strong>What it creates:</strong>
+                <ul>
+                    <li>1 approved esports tournament (visible on main page)</li>
+                    <li>1 pending campus event (visible on moderation page)</li>
+                </ul>
+            </div>
+            
+            <div class="status-section">
+                <div id="auth-status">
+                    <p class="auth-loading">🔍 Checking authentication...</p>
+                </div>
+                
+                <div id="user-info" class="user-section" style="display: none;">
+                    <p>✅ Logged in as: <span id="user-email" class="user-email"></span></p>
+                    <div style="margin-top: 1rem;">
+                        <button class="btn btn-primary" onclick="createTestEvents()">
+                            <i class="ph-bold ph-plus-circle"></i>
+                            Create Test Events
+                        </button>
+                        <a href="esports-and-events.html" class="btn btn-secondary">
+                            <i class="ph-bold ph-game-controller"></i>
+                            View Events Page
+                        </a>
+                        <a href="moderate-events.html" class="btn btn-success">
+                            <i class="ph-bold ph-shield-check"></i>
+                            View Moderation Page
+                        </a>
+                    </div>
+                </div>
+                
+                <div id="login-prompt" class="user-section" style="display: none;">
+                    <p>🔒 Please login first to create test events.</p>
+                    <a href="login.html" class="btn btn-primary">
+                        <i class="ph-bold ph-sign-in"></i>
+                        Go to Login
+                    </a>
+                </div>
+            </div>
+            
+            <div id="status"></div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+        import { 
+            getFirestore, 
+            collection, 
+            addDoc,
+            serverTimestamp 
+        } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+        import { firebaseConfig } from './firebase-config.js';
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        let currentUser = null;
+
+        // Check authentication
+        onAuthStateChanged(auth, (user) => {
+            const authStatus = document.getElementById('auth-status');
+            const userInfo = document.getElementById('user-info');
+            const loginPrompt = document.getElementById('login-prompt');
+            
+            if (user) {
+                currentUser = user;
+                authStatus.style.display = 'none';
+                userInfo.style.display = 'block';
+                loginPrompt.style.display = 'none';
+                document.getElementById('user-email').textContent = user.email;
+            } else {
+                currentUser = null;
+                authStatus.style.display = 'none';
+                userInfo.style.display = 'none';
+                loginPrompt.style.display = 'block';
+            }
+        });
+
+        // Create test events function
+        window.createTestEvents = async function() {
+            if (!currentUser) {
+                showStatus('Please login first', 'error');
+                return;
+            }
+            
+            showStatus('Creating test events...', 'info');
+            
+            try {
+                // Create a test approved event
+                const approvedEvent = {
+                    title: "DSU Valorant Championship",
+                    description: "Join us for the ultimate Valorant tournament! Battle it out with fellow students for glory and prizes.",
+                    eventType: "esports",
+                    game: "Valorant",
+                    startDate: "2025-02-15T14:00:00.000Z",
+                    endDate: "2025-02-15T18:00:00.000Z",
+                    location: "Computer Lab A",
+                    maxParticipants: 32,
+                    prize: 5000,
+                    contactInfo: "esports@dsu.edu",
+                    createdBy: currentUser.uid,
+                    createdByName: currentUser.displayName || currentUser.email,
+                    createdAt: serverTimestamp(),
+                    updatedAt: serverTimestamp(),
+                    status: "pending_approval", // Must be pending_approval per security rules
+                    submittedBy: {
+                        uid: currentUser.uid,
+                        displayName: currentUser.displayName || currentUser.email
+                    },
+                    participants: []
+                };
+                
+                const docRef1 = await addDoc(collection(db, 'events'), approvedEvent);
+                console.log('Approved event created with ID:', docRef1.id);
+                
+                // Create a pending event for moderation testing
+                const pendingEvent = {
+                    title: "Tech Talk on AI",
+                    description: "An insightful session on the latest developments in Artificial Intelligence.",
+                    eventType: "campus",
+                    category: "academic",
+                    organizer: "Tech Club",
+                    startDate: "2025-02-20T15:00:00.000Z",
+                    location: "Auditorium",
+                    maxParticipants: 100,
+                    contactInfo: "techclub@dsu.edu",
+                    createdBy: currentUser.uid,
+                    createdByName: currentUser.displayName || currentUser.email,
+                    createdAt: serverTimestamp(),
+                    updatedAt: serverTimestamp(),
+                    status: "pending_approval",
+                    submittedBy: {
+                        uid: currentUser.uid,
+                        displayName: currentUser.displayName || currentUser.email
+                    },
+                    participants: []
+                };
+                
+                const docRef2 = await addDoc(collection(db, 'events'), pendingEvent);
+                console.log('Pending event created with ID:', docRef2.id);
+                
+                showStatus('✅ Test events created successfully! You can now view them on the events page.', 'success');
+                
+            } catch (error) {
+                console.error('Error creating test events:', error);
+                showStatus('❌ Error creating test events: ' + error.message, 'error');
+            }
+        };
+
+        function showStatus(message, type) {
+            const status = document.getElementById('status');
+            status.innerHTML = `<div class="status ${type}">${message}</div>`;
+        }
+    </script>
+</body>
+</html>

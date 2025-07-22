@@ -822,9 +822,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 case 'chats':
                     window.location.href = 'chats.html';
                     return;
+                case 'esports':
+                    window.location.href = 'esports-and-events.html';
+                    return;
                 case 'notes':
                 case 'pyqs':
-                case 'esports':
                 case 'events':
                 case 'clubs':
                     // These are in development - show coming soon notification
