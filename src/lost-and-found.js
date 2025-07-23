@@ -350,7 +350,7 @@ function createItemCard(item) {
             <div class="item-actions">
                 <div class="reported-by">
                     <i class="fas fa-user"></i> 
-                    Reported by: ${escapeHtml(item.reportedBy.displayName)}
+                    Reported by: <a href="profile.html?uid=${item.reportedBy.uid}" class="user-link">${escapeHtml(item.reportedBy.displayName)}</a>
                 </div>
                 ${canResolve ? `
                 <button class="resolve-btn" data-item-id="${item.id}">

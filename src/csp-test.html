@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <!-- Security: Content Security Policy - Comprehensive test -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://www.gstatic.com https://unpkg.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://fonts.gstatic.com https://unpkg.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://esm.sh https://cdn.skypack.dev https://ga.jspm.io; style-src-elem 'self' 'unsafe-inline' https://fonts.googleapis.com https://fonts.gstatic.com https://unpkg.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://esm.sh https://cdn.skypack.dev https://ga.jspm.io; font-src 'self' https://fonts.gstatic.com https://unpkg.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://esm.sh https://cdn.skypack.dev https://ga.jspm.io; img-src 'self' data: https: blob:; connect-src 'self' https://firestore.googleapis.com https://firebase.googleapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com wss://*.firebaseio.com ws://127.0.0.1:3001 ws://localhost:3001; worker-src 'self' blob:;">
+    
+    <title>CSP Test - After Hours Hub</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Phosphor Icons -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: #1a1a1a;
+            color: white;
+            padding: 2rem;
+        }
+        .test-card {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            padding: 2rem;
+            margin: 1rem 0;
+        }
+        .icon-test {
+            font-size: 2rem;
+            margin: 0.5rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-card">
+        <h1>CSP and Icon Loading Test</h1>
+        <p>Testing various CDN resources and icon libraries:</p>
+        
+        <div class="icon-test">
+            <i class="ph-bold ph-user-circle"></i> User Icon
+            <i class="ph-bold ph-heart"></i> Heart Icon
+            <i class="ph-bold ph-star"></i> Star Icon
+            <i class="ph-bold ph-chat-circle"></i> Chat Icon
+        </div>
+        
+        <p>If you see the icons above and this text is styled with Poppins font, the CSP is working correctly!</p>
+        
+        <div id="status">Loading...</div>
+    </div>
+    
+    <script>
+        // Test if Phosphor icons loaded properly
+        setTimeout(() => {
+            const icons = document.querySelectorAll('.ph-bold');
+            const status = document.getElementById('status');
+            
+            if (icons.length > 0) {
+                status.innerHTML = '✅ All resources loaded successfully! CSP is properly configured.';
+                status.style.color = '#4ade80';
+            } else {
+                status.innerHTML = '❌ Icons failed to load. CSP may be blocking resources.';
+                status.style.color = '#ef4444';
+            }
+        }, 2000);
+    </script>
+</body>
+</html>

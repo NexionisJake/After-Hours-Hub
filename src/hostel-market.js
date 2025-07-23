@@ -605,7 +605,9 @@ function createSecureItemCard(doc, item) {
     }
     sellerImg.alt = sanitizedItem.sellerName;
     
-    const sellerName = document.createElement('span');
+    const sellerName = document.createElement('a');
+    sellerName.href = `profile.html?uid=${sanitizedItem.sellerId || item.sellerId}`;
+    sellerName.className = 'user-link';
     const displaySellerName = sanitizedItem.sellerName.length > 15 ? 
         sanitizedItem.sellerName.substring(0, 15) + '...' : sanitizedItem.sellerName;
     sellerName.textContent = displaySellerName;

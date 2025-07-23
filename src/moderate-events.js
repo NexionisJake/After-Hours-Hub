@@ -205,7 +205,7 @@ function createEventCard(event) {
             ${event.organizer ? `
                 <div class="event-detail">
                     <i class="ph-bold ph-users"></i>
-                    <span>Organizer: ${escapeHtml(event.organizer)}</span>
+                    <span>Organizer: <a href="profile.html?uid=${event.submittedBy?.uid || ''}" class="user-link">${escapeHtml(event.organizer)}</a></span>
                 </div>
             ` : ''}
             ${event.prize ? `

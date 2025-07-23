@@ -49,14 +49,48 @@ tabButtons.forEach(btn => {
 });
 
 function setActiveTab(activeTab) {
+    console.log('🔄 Switching to tab:', activeTab);
+    
     // Update tab buttons
     tabButtons.forEach(btn => {
         btn.classList.toggle('active', btn.dataset.tab === activeTab);
     });
     
-    // Update form sections
+    // Update form sections and manage ALL fields (not just required ones)
     formSections.forEach(section => {
-        section.classList.toggle('active', section.id === `${activeTab}-form`);
+        const isActive = section.id === `${activeTab}-form`;
+        section.classList.toggle('active', isActive);
+        
+        console.log(`📋 Section ${section.id} is ${isActive ? 'ACTIVE' : 'inactive'}`);
+        
+        // Handle ALL form fields in this section
+        const allFields = section.querySelectorAll('input, select, textarea');
+        console.log(`📝 Found ${allFields.length} fields in ${section.id}`);
+        
+        allFields.forEach(field => {
+            if (isActive) {
+                // Enable ALL fields in active section
+                field.disabled = false;
+                
+                // Only restore required attribute if the field should be required
+                if (field.hasAttribute('data-originally-required') || 
+                    field.closest('.form-group')?.querySelector('.required')) {
+                    field.setAttribute('required', '');
+                }
+                
+                console.log(`✅ ENABLED field: ${field.id || field.name || 'unnamed'}`);
+            } else {
+                // Disable ALL fields in inactive sections
+                // Store original required state before removing
+                if (field.hasAttribute('required')) {
+                    field.setAttribute('data-originally-required', 'true');
+                }
+                field.removeAttribute('required');
+                field.disabled = true;
+                
+                console.log(`❌ disabled field: ${field.id || field.name || 'unnamed'}`);
+            }
+        });
     });
     
     currentTab = activeTab;
@@ -252,6 +286,35 @@ function initTheme() {
 
 // Initialize on load
 document.addEventListener('DOMContentLoaded', () => {
+    console.log('🚀 Page loaded, initializing...');
+    
+    // Check if elements exist
+    console.log('Tab buttons found:', tabButtons.length);
+    console.log('Form sections found:', formSections.length);
+    
     initTheme();
     initializeDateFields();
+    
+    // Initialize the default active tab to ensure proper form validation
+    console.log('Setting default tab to tournament...');
+    setActiveTab('tournament');
+    
+    // Add a global function for debugging
+    window.debugTabSwitch = (tabName) => {
+        console.log(`🐛 Debug: Switching to ${tabName} tab`);
+        setActiveTab(tabName);
+        
+        // Test campus fields after switch
+        if (tabName === 'campus') {
+            setTimeout(() => {
+                const titleField = document.getElementById('campus-title');
+                const categoryField = document.getElementById('campus-category');
+                console.log('Campus title field disabled?', titleField?.disabled);
+                console.log('Campus category field disabled?', categoryField?.disabled);
+                console.log('Campus form section active?', document.getElementById('campus-form')?.classList.contains('active'));
+            }, 100);
+        }
+    };
+    
+    console.log('✅ Initialization complete. Try: debugTabSwitch("campus") in console');
 });

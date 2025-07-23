@@ -300,21 +300,53 @@ function createNotificationElement(notification) {
     const iconDiv = document.createElement('div');
     iconDiv.className = 'notification-icon';
     const icon = document.createElement('i');
-    icon.className = 'ph-fill ph-chat-circle';
+    
+    // Set icon based on notification type
+    if (notification.type === 'event_approval') {
+        icon.className = 'ph-fill ph-check-circle';
+        icon.style.color = '#22c55e'; // Green for approval
+    } else if (notification.type === 'event_rejection') {
+        icon.className = 'ph-fill ph-x-circle';
+        icon.style.color = '#ef4444'; // Red for rejection
+    } else {
+        icon.className = 'ph-fill ph-chat-circle';
+    }
+    
     iconDiv.appendChild(icon);
     contentDiv.appendChild(iconDiv);
+    
     const textDiv = document.createElement('div');
     textDiv.className = 'notification-text';
     const messageP = document.createElement('p');
     messageP.className = 'notification-message';
-    const strong = document.createElement('strong');
-    strong.textContent = notification.senderName;
-    messageP.appendChild(strong);
-    messageP.appendChild(document.createTextNode(' sent you a message about '));
-    const itemSpan = document.createElement('span');
-    itemSpan.className = 'item-title';
-    itemSpan.textContent = `"${notification.relatedItemTitle}"`;
-    messageP.appendChild(itemSpan);
+    
+    // Handle different notification types
+    if (notification.type === 'event_approval' || notification.type === 'event_rejection') {
+        // Event approval/rejection notifications
+        const titleStrong = document.createElement('strong');
+        titleStrong.textContent = notification.title || 'Event Update';
+        messageP.appendChild(titleStrong);
+        
+        if (notification.message) {
+            messageP.appendChild(document.createElement('br'));
+            const messageSpan = document.createElement('span');
+            messageSpan.textContent = notification.message;
+            messageSpan.style.fontSize = '0.9em';
+            messageSpan.style.opacity = '0.9';
+            messageP.appendChild(messageSpan);
+        }
+    } else {
+        // Chat notifications (existing behavior)
+        const strong = document.createElement('strong');
+        strong.textContent = notification.senderName || 'Someone';
+        messageP.appendChild(strong);
+        messageP.appendChild(document.createTextNode(' sent you a message about '));
+        const itemSpan = document.createElement('span');
+        itemSpan.className = 'item-title';
+        itemSpan.textContent = `"${notification.relatedItemTitle || 'an item'}"`;
+        messageP.appendChild(itemSpan);
+    }
+    
     textDiv.appendChild(messageP);
     const timeP = document.createElement('p');
     timeP.className = 'notification-time';
@@ -323,9 +355,13 @@ function createNotificationElement(notification) {
     contentDiv.appendChild(textDiv);
     notificationEl.appendChild(contentDiv);
     
-    // Add click handler to navigate to chat
+    // Add click handler based on notification type
     notificationEl.addEventListener('click', () => {
-        if (notification.chatId) {
+        if (notification.type === 'event_approval' || notification.type === 'event_rejection') {
+            // For event notifications, redirect to events page
+            window.location.href = 'esports-and-events.html';
+        } else if (notification.chatId) {
+            // For chat notifications, navigate to chat
             window.location.href = `chats.html?chatId=${notification.chatId}`;
         }
         hideNotificationPanel();

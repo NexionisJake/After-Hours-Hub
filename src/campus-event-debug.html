@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Campus Event Tab Debug - After Hours Hub</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #1a1a1a;
+            color: white;
+            padding: 20px;
+        }
+        
+        .debug-container {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        
+        button {
+            background: #6c5ce7;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        
+        .test-result {
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 5px;
+        }
+        
+        .success { background: rgba(0, 255, 0, 0.2); }
+        .error { background: rgba(255, 0, 0, 0.2); }
+        .info { background: rgba(0, 0, 255, 0.2); }
+    </style>
+</head>
+<body>
+    <h1>🐛 Campus Event Tab Debug Tool</h1>
+    
+    <div class="debug-container">
+        <h2>Quick Tests</h2>
+        <button onclick="testTabElements()">Test Tab Elements</button>
+        <button onclick="testCampusFields()">Test Campus Fields</button>
+        <button onclick="simulateTabSwitch()">Simulate Tab Switch</button>
+        <button onclick="testFormSubmission()">Test Form Data Collection</button>
+    </div>
+    
+    <div id="results" class="debug-container">
+        <h2>Results</h2>
+        <p>Click a test button above to see results...</p>
+    </div>
+    
+    <script>
+        function log(message, type = 'info') {
+            const results = document.getElementById('results');
+            const div = document.createElement('div');
+            div.className = `test-result ${type}`;
+            div.innerHTML = `<strong>${new Date().toLocaleTimeString()}</strong> - ${message}`;
+            results.appendChild(div);
+        }
+        
+        function testTabElements() {
+            log("🔍 Testing tab elements...");
+            
+            // Test if we can find tab buttons
+            const tabButtons = document.querySelectorAll('.tab-btn');
+            log(`Found ${tabButtons.length} tab buttons`, tabButtons.length === 2 ? 'success' : 'error');
+            
+            tabButtons.forEach(btn => {
+                const tab = btn.dataset.tab;
+                const isActive = btn.classList.contains('active');
+                log(`Tab "${tab}": ${isActive ? 'ACTIVE' : 'inactive'}`, isActive && tab === 'tournament' ? 'success' : 'info');
+            });
+            
+            // Test form sections
+            const formSections = document.querySelectorAll('.form-section');
+            log(`Found ${formSections.length} form sections`, formSections.length === 2 ? 'success' : 'error');
+            
+            formSections.forEach(section => {
+                const isActive = section.classList.contains('active');
+                log(`Section "${section.id}": ${isActive ? 'ACTIVE' : 'inactive'}`, 'info');
+            });
+        }
+        
+        function testCampusFields() {
+            log("🏫 Testing campus form fields...");
+            
+            const campusFields = [
+                'campus-title',
+                'campus-category',
+                'campus-description',
+                'campus-start-date',
+                'campus-end-date',
+                'campus-location',
+                'campus-max-participants',
+                'campus-organizer',
+                'campus-contact'
+            ];
+            
+            campusFields.forEach(fieldId => {
+                const field = document.getElementById(fieldId);
+                if (field) {
+                    const isDisabled = field.disabled;
+                    const isRequired = field.hasAttribute('required');
+                    const isVisible = window.getComputedStyle(field.closest('.form-section')).display !== 'none';
+                    
+                    log(`Field "${fieldId}": ${isDisabled ? '❌ DISABLED' : '✅ enabled'} | ${isRequired ? 'required' : 'optional'} | ${isVisible ? 'visible' : 'hidden'}`, 
+                        isDisabled ? 'error' : 'success');
+                } else {
+                    log(`Field "${fieldId}": ❌ NOT FOUND`, 'error');
+                }
+            });
+        }
+        
+        function simulateTabSwitch() {
+            log("🔄 Simulating tab switch to campus...");
+            
+            const campusTab = document.querySelector('[data-tab="campus"]');
+            if (campusTab) {
+                log("Found campus tab button, clicking...", 'info');
+                campusTab.click();
+                
+                // Wait a moment then test
+                setTimeout(() => {
+                    log("Checking results after tab switch...", 'info');
+                    testCampusFields();
+                }, 100);
+            } else {
+                log("❌ Campus tab button not found!", 'error');
+            }
+        }
+        
+        function testFormDataCollection() {
+            log("📝 Testing form data collection...");
+            
+            // Fill out campus form with test data
+            const testData = {
+                'campus-title': 'Test Campus Event',
+                'campus-category': 'academic',
+                'campus-description': 'Test description',
+                'campus-location': 'Test Location',
+                'campus-organizer': 'Test Organizer',
+                'campus-contact': 'test@example.com'
+            };
+            
+            // Set tomorrow's date for start date
+            const tomorrow = new Date();
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            testData['campus-start-date'] = tomorrow.toISOString().slice(0, 16);
+            
+            Object.entries(testData).forEach(([fieldId, value]) => {
+                const field = document.getElementById(fieldId);
+                if (field && !field.disabled) {
+                    field.value = value;
+                    log(`✅ Set ${fieldId} = "${value}"`, 'success');
+                } else if (field && field.disabled) {
+                    log(`❌ Cannot set ${fieldId} - field is disabled`, 'error');
+                } else {
+                    log(`❌ Field ${fieldId} not found`, 'error');
+                }
+            });
+        }
+        
+        // Auto-run initial test
+        setTimeout(() => {
+            log("🚀 Auto-running initial tests...");
+            testTabElements();
+        }, 1000);
+    </script>
+</body>
+</html>

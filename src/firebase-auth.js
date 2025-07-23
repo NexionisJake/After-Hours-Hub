@@ -2,10 +2,12 @@
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getAuth, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { getFirestore, doc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import { firebaseConfig } from './firebase-config.js';
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
 
 // Analytics will only be initialized if measurementId is present in config (production only)
 let analytics = null;
@@ -28,10 +30,32 @@ if (firebaseConfig.measurementId) {
 const auth = getAuth(app);
 const provider = new GoogleAuthProvider();
 
+// Function to create or update user document
+async function createUserDocument(user) {
+    try {
+        const userRef = doc(db, 'users', user.uid);
+        const userData = {
+            uid: user.uid,
+            displayName: user.displayName || 'Anonymous User',
+            email: user.email,
+            photoURL: user.photoURL || '',
+            lastLoginAt: serverTimestamp(),
+            createdAt: serverTimestamp()
+        };
+        
+        // Use merge: true to update only new fields and not overwrite existing data
+        await setDoc(userRef, userData, { merge: true });
+        console.log('User document created/updated successfully');
+    } catch (error) {
+        console.error('Error creating user document:', error);
+        // Don't block login if user document creation fails
+    }
+}
+
 // --- Function to handle Google Sign-In ---
 const signInWithGoogle = () => {
   signInWithPopup(auth, provider)
-    .then((result) => {
+    .then(async (result) => {
       // This gives you a Google Access Token. You can use it to access the Google API.
       const credential = GoogleAuthProvider.credentialFromResult(result);
       const token = credential.accessToken;
@@ -39,6 +63,9 @@ const signInWithGoogle = () => {
       const user = result.user;
       
       console.log("Authentication successful:", user);
+      
+      // Create or update user document in Firestore
+      await createUserDocument(user);
       
       // Redirect to dashboard on successful login
       window.location.href = 'dashboard-clean.html';

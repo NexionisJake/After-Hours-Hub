@@ -1,0 +1,19 @@
+User-agent: *
+Allow: /
+
+# Allow search engines to index the main pages
+Allow: /src/login.html
+Allow: /src/dashboard-clean.html
+Allow: /src/esports-and-events.html
+Allow: /src/hostel-market.html
+Allow: /src/lost-and-found.html
+Allow: /src/chats.html
+
+# Disallow private/sensitive areas
+Disallow: /functions/
+Disallow: /firestore.rules
+Disallow: /*.js$
+Disallow: /*.json$
+
+# Sitemap (if you create one in the future)
+# Sitemap: https://your-domain.com/sitemap.xml

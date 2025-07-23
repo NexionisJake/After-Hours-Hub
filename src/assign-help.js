@@ -688,7 +688,12 @@ function createRequestElement(request) {
     // Author
     const authorP = document.createElement('p');
     authorP.className = 'request-author';
-    authorP.textContent = `By: ${request.authorName || 'Anonymous'}`;
+    const authorLink = document.createElement('a');
+    authorLink.href = `profile.html?uid=${request.authorId}`;
+    authorLink.className = 'user-link';
+    authorLink.textContent = request.authorName || 'Anonymous';
+    authorP.appendChild(document.createTextNode('By: '));
+    authorP.appendChild(authorLink);
     el.appendChild(authorP);
     // Description
     const descP = document.createElement('p');

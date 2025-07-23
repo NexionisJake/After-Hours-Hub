@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <!-- Security: Content Security Policy -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://www.gstatic.com https://unpkg.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://fonts.gstatic.com https://unpkg.com; font-src 'self' https://fonts.gstatic.com https://unpkg.com; img-src 'self' data: https: blob: https://ui-avatars.com; connect-src 'self' https://firestore.googleapis.com https://firebase.googleapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com wss://*.firebaseio.com ws://127.0.0.1:3001 ws://localhost:3001; worker-src 'self' blob:;">
+    
+    <title>Profile Picture Test - After Hours Hub</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Phosphor Icons -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: #1a1a1a;
+            color: white;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2rem;
+        }
+        
+        .avatar-test {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            border: 3px solid #6c5ce7;
+            background: rgba(255, 255, 255, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 48px;
+            font-weight: 600;
+            color: #6c5ce7;
+            backdrop-filter: blur(10px);
+            overflow: hidden;
+            position: relative;
+        }
+
+        .avatar-test img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 50%;
+        }
+
+        .avatar-test span {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+        
+        .test-card {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            padding: 2rem;
+            margin: 1rem 0;
+            text-align: center;
+        }
+        
+        button {
+            background: #6c5ce7;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            margin: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-card">
+        <h1>Profile Picture Functionality Test</h1>
+        
+        <div class="avatar-test" id="testAvatar">
+            <img id="testAvatarImg" src="" alt="Test Avatar" style="display: none;">
+            <span id="testAvatarText"><i class="ph-bold ph-user"></i></span>
+        </div>
+        
+        <p id="status">Click a button to test different avatar scenarios</p>
+        
+        <div>
+            <button onclick="testUIAvatars('John Doe')">Test UI Avatars (John Doe)</button>
+            <button onclick="testUIAvatars('Sarah Johnson')">Test UI Avatars (Sarah Johnson)</button>
+            <button onclick="testFallback('Mike Wilson')">Test Fallback (Mike Wilson)</button>
+            <button onclick="testBrokenImage()">Test Broken Image</button>
+        </div>
+    </div>
+    
+    <script>
+        function testUIAvatars(name) {
+            const avatarImg = document.getElementById('testAvatarImg');
+            const avatarText = document.getElementById('testAvatarText');
+            const status = document.getElementById('status');
+            
+            const avatarUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&size=120&background=6c5ce7&color=ffffff&bold=true`;
+            
+            avatarImg.src = avatarUrl;
+            avatarImg.style.display = 'block';
+            avatarText.style.display = 'none';
+            
+            status.textContent = `Testing UI Avatars service for: ${name}`;
+            
+            avatarImg.onload = () => {
+                status.textContent = `✅ UI Avatars loaded successfully for: ${name}`;
+            };
+            
+            avatarImg.onerror = () => {
+                status.textContent = `❌ UI Avatars failed for: ${name}`;
+                fallbackToLetter(name);
+            };
+        }
+        
+        function testFallback(name) {
+            const status = document.getElementById('status');
+            status.textContent = `Testing fallback letter avatar for: ${name}`;
+            fallbackToLetter(name);
+        }
+        
+        function testBrokenImage() {
+            const avatarImg = document.getElementById('testAvatarImg');
+            const avatarText = document.getElementById('testAvatarText');
+            const status = document.getElementById('status');
+            
+            avatarImg.src = 'https://broken-url-that-does-not-exist.com/image.jpg';
+            avatarImg.style.display = 'block';
+            avatarText.style.display = 'none';
+            
+            status.textContent = 'Testing broken image URL...';
+            
+            avatarImg.onerror = () => {
+                status.textContent = '✅ Broken image handled correctly, falling back to letter';
+                fallbackToLetter('Test User');
+            };
+        }
+        
+        function fallbackToLetter(name) {
+            const avatarImg = document.getElementById('testAvatarImg');
+            const avatarText = document.getElementById('testAvatarText');
+            
+            avatarImg.style.display = 'none';
+            avatarText.style.display = 'block';
+            const firstLetter = name.charAt(0).toUpperCase();
+            avatarText.innerHTML = firstLetter;
+        }
+    </script>
+</body>
+</html>

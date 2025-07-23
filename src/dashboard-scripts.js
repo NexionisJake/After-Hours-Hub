@@ -196,6 +196,22 @@ const handleSignOut = () => {
 // Make handleSignOut globally accessible
 window.handleSignOut = handleSignOut;
 
+// Handle viewing current user's profile
+const handleViewProfile = () => {
+    const user = auth.currentUser;
+    if (user) {
+        // Navigate to the profile page with the current user's UID
+        window.location.href = `profile.html?uid=${user.uid}`;
+    } else {
+        console.error('No authenticated user found');
+        // Show a notification or redirect to login
+        window.location.href = 'login.html';
+    }
+};
+
+// Make handleViewProfile globally accessible
+window.handleViewProfile = handleViewProfile;
+
 // ===== LOST & FOUND STATS UPDATE =====
 function updateLostAndFoundStats() {
     const lostFoundCard = document.querySelector('[data-route="lostfound"]');
@@ -653,6 +669,7 @@ document.addEventListener('DOMContentLoaded', () => {
         metrics: document.querySelectorAll('.metric-value'),
         profileDropdownBtn: document.getElementById('profile-dropdown-btn'),
         profileDropdown: document.getElementById('profile-dropdown'),
+        viewProfileBtn: document.getElementById('view-profile-btn'),
         signOutBtn: document.getElementById('sign-out-btn')
     };
 
@@ -1088,11 +1105,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // ===== ADD THIS AT THE END =====
     const signOutBtn = document.getElementById('sign-out-btn');
+    const viewProfileBtn = document.getElementById('view-profile-btn');
+    
     if (signOutBtn) {
         // This makes the dropdown appear/disappear, for now, we just link the button directly
         signOutBtn.parentElement.parentElement.addEventListener('click', () => {
              signOutBtn.parentElement.classList.toggle('hidden');
         });
         signOutBtn.addEventListener('click', handleSignOut);
+    }
+    
+    if (viewProfileBtn) {
+        viewProfileBtn.addEventListener('click', handleViewProfile);
     }
 });

@@ -111,5 +111,17 @@ service cloud.firestore {
       // Prevent deletion.
       allow delete: if false;
     }
+
+    // Rules for User Profiles System
+    match /users/{userId} {
+      // Any signed-in user can read public user information for profiles
+      allow read: if isSignedIn();
+
+      // Only the user can create/update their own profile
+      allow create, update: if isSignedIn() && request.auth.uid == userId;
+
+      // Don't allow deletion of user profiles
+      allow delete: if false;
+    }
   }
 }
