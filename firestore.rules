@@ -7,7 +7,7 @@ service cloud.firestore {
     
     function isModerator() {
       // Moderator can be identified either by UID or email
-      let moderatorUids = ['yx9Kk8iB76ZmZfuFdoY7VzIkO5w2', 'MOD_UID_2'];
+      let moderatorUids = ['yx9Kk8iB76ZmZfuFdoY7VzIkO5w2', 'yx9Kk8iB76ZmZfuFdoY7VzIkO5w2'];
       let moderatorEmails = ['incredibles23507@gmail.com'];
       
       return request.auth != null && (
@@ -125,3 +125,4 @@ service cloud.firestore {
     }
   }
 }
+

@@ -179,9 +179,48 @@ function createEventCard(event) {
                 <i class="ph-bold ph-user-check"></i>
                 <span>${event.participants ? event.participants.length : 0} registered</span>
             </div>
-            <button class="join-btn" ${status === 'completed' ? 'disabled' : ''} onclick="event.stopPropagation(); joinEvent('${event.id}')">
-                ${status === 'completed' ? 'Completed' : status === 'ongoing' ? 'Join Now' : 'Register'}
+            <button class="contact-btn" onclick="event.stopPropagation(); showContactInfo('${event.id}')">
+                ${event.eventType === 'esports' ? 'Contact Organizer' : 'View Contact'}
             </button>
+        </div>
+        
+        <!-- Contact Modal -->
+        <div class="contact-modal hidden" id="contact-modal-${event.id}">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Contact Information</h3>
+                    <button class="close-modal-btn" onclick="event.stopPropagation(); hideContactInfo('${event.id}')">
+                        <i class="ph-bold ph-x"></i>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <p>To join or ask questions about this ${event.eventType === 'esports' ? 'tournament' : 'event'}, please contact:</p>
+                    <div class="organizer-info">
+                        <div class="contact-item">
+                            <i class="ph-bold ph-user"></i>
+                            <span>${escapeHtml(event.organizer || 'Not specified')}</span>
+                        </div>
+                        ${event.contactInfo ? `
+                            <div class="contact-item">
+                                <i class="ph-bold ph-envelope"></i>
+                                <span>${escapeHtml(event.contactInfo)}</span>
+                            </div>
+                        ` : ''}
+                        ${event.contactPhone ? `
+                            <div class="contact-item">
+                                <i class="ph-bold ph-phone"></i>
+                                <span>${escapeHtml(event.contactPhone)}</span>
+                            </div>
+                        ` : ''}
+                        ${event.contactEmail ? `
+                            <div class="contact-item">
+                                <i class="ph-bold ph-at"></i>
+                                <span>${escapeHtml(event.contactEmail)}</span>
+                            </div>
+                        ` : ''}
+                    </div>
+                </div>
+            </div>
         </div>
     `;
     
@@ -194,17 +233,48 @@ function viewEventDetails(event) {
     alert(`Event Details:\n\nTitle: ${event.title}\nType: ${event.eventType}\nDescription: ${event.description}\nStart Date: ${event.startDate}\nLocation: ${event.location || 'TBD'}`);
 }
 
-function joinEvent(eventId) {
-    const user = auth.currentUser;
-    if (!user) {
-        alert('Please login to join events.');
-        return;
+// Contact modal functions
+function showContactInfo(eventId) {
+    const modal = document.getElementById(`contact-modal-${eventId}`);
+    if (modal) {
+        modal.classList.remove('hidden');
+        // Prevent body scroll when modal is open
+        document.body.style.overflow = 'hidden';
     }
-    
-    // This would typically update the event document to add the user to participants
-    // For now, just show a confirmation
-    alert('Registration functionality will be implemented next. You\'ll be notified when it\'s ready!');
 }
+
+function hideContactInfo(eventId) {
+    const modal = document.getElementById(`contact-modal-${eventId}`);
+    if (modal) {
+        modal.classList.add('hidden');
+        // Restore body scroll
+        document.body.style.overflow = 'auto';
+    }
+}
+
+// Close modal when clicking outside of it
+document.addEventListener('click', (e) => {
+    if (e.target.classList.contains('contact-modal')) {
+        const modalId = e.target.id;
+        const eventId = modalId.replace('contact-modal-', '');
+        hideContactInfo(eventId);
+    }
+});
+
+// Close modal with Escape key
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+        const openModals = document.querySelectorAll('.contact-modal:not(.hidden)');
+        openModals.forEach(modal => {
+            const eventId = modal.id.replace('contact-modal-', '');
+            hideContactInfo(eventId);
+        });
+    }
+});
+
+// Make functions global so they can be called from onclick attributes
+window.showContactInfo = showContactInfo;
+window.hideContactInfo = hideContactInfo;
 
 // Utility functions
 function showLoading() {
