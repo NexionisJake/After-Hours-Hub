@@ -1,13 +1,30 @@
 // src/firebase-auth.js
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-analytics.js";
 import { getAuth, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import { firebaseConfig } from './firebase-config.js';
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
-const analytics = getAnalytics(app);
+
+// Analytics will only be initialized if measurementId is present in config (production only)
+let analytics = null;
+if (firebaseConfig.measurementId) {
+    try {
+        import("https://www.gstatic.com/firebasejs/10.12.2/firebase-analytics.js")
+            .then(({ getAnalytics }) => {
+                analytics = getAnalytics(app);
+                console.log('Analytics enabled in production environment');
+            })
+            .catch(error => {
+                console.log('Analytics initialization failed:', error);
+            });
+    } catch (error) {
+        console.log('Analytics import failed:', error);
+    }
+} else {
+    console.log('Analytics disabled - no measurementId in config (development mode)');
+}
 const auth = getAuth(app);
 const provider = new GoogleAuthProvider();
 
