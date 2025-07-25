@@ -11,6 +11,17 @@
         "source": "**",
         "destination": "/login.html"
       }
+    ],
+    "headers": [
+      {
+        "source": "/robots.txt",
+        "headers": [
+          {
+            "key": "Content-Type",
+            "value": "text/plain"
+          }
+        ]
+      }
     ]
   },
   "firestore": {

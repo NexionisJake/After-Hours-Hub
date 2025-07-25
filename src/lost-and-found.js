@@ -317,7 +317,7 @@ function createItemCard(item) {
     const isOwner = currentUser && item.reportedBy.uid === currentUser.uid;
     const canResolve = isOwner && item.status === 'open';
     
-    return `
+    const cardHTML = `
         <div class="item-card" data-item-id="${item.id}">
             <div class="item-header">
                 <span class="item-type ${item.itemType}">${item.itemType}</span>
@@ -359,6 +359,13 @@ function createItemCard(item) {
             </div>
         </div>
     `;
+    
+    // Create a temporary container to parse the HTML
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = cardHTML;
+    
+    // Return the first child (the actual card element)
+    return tempDiv.firstElementChild;
 }
 
 /**

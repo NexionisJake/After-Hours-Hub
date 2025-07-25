@@ -17,6 +17,15 @@ import { initiateChat } from './chat-system.js';
 // Import notification system
 import './notification-system.js';
 
+// Performance monitoring in development
+if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+    import('./performance-monitor.js').then(module => {
+        console.log('🚀 Performance monitoring enabled for development');
+    }).catch(err => {
+        console.log('Performance monitoring not available:', err.message);
+    });
+}
+
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
@@ -293,7 +302,8 @@ function initializeFormSubmission() {
             name: newItemForm['item-name'].value.trim(),
             description: newItemForm['item-description'].value.trim(),
             category: newItemForm['item-category'].value,
-            price: newItemForm['item-price'].value.trim()
+            price: newItemForm['item-price'].value.trim(),
+            quantity: newItemForm['item-quantity'] ? newItemForm['item-quantity'].value.trim() : null
         };
 
         // Validate item name
@@ -328,16 +338,33 @@ function initializeFormSubmission() {
             return;
         }
 
+        // Validate quantity for food items
+        let quantityNum = null;
+        if (formData.category === 'food') {
+            if (!formData.quantity || formData.quantity === '') {
+                formMessage.textContent = "Quantity is required for food items.";
+                formMessage.className = 'error';
+                return;
+            }
+            quantityNum = parseInt(formData.quantity);
+            if (isNaN(quantityNum) || quantityNum <= 0 || quantityNum > 1000) {
+                formMessage.textContent = "Quantity must be a valid number between 1 and 1,000.";
+                formMessage.className = 'error';
+                return;
+            }
+        }
+
         // Security Check 4: Sanitize text inputs to prevent XSS
         const sanitizedData = {
             name: sanitizeText(formData.name),
             description: sanitizeText(formData.description),
             category: formData.category, // Category is validated against whitelist
-            price: priceNum
+            price: priceNum,
+            quantity: quantityNum // null for non-food items
         };
 
         try {
-            await addDoc(collection(db, "marketListings"), {
+            const itemData = {
                 name: sanitizedData.name,
                 description: sanitizedData.description,
                 category: sanitizedData.category,
@@ -348,7 +375,14 @@ function initializeFormSubmission() {
                 sellerPhotoURL: currentUser.photoURL || '',
                 createdAt: serverTimestamp(),
                 isSold: false
-            });
+            };
+
+            // Add quantity field only for food items
+            if (sanitizedData.quantity !== null) {
+                itemData.quantity = sanitizedData.quantity;
+            }
+
+            await addDoc(collection(db, "marketListings"), itemData);
             
             newItemForm.reset();
             uploadedFileUrl = null;
@@ -364,6 +398,42 @@ function initializeFormSubmission() {
             const userMessage = handleError(error, 'marketItemSubmission', false);
             formMessage.textContent = userMessage;
             formMessage.className = 'error';
+        }
+    });
+}
+
+// === CATEGORY HANDLER FOR QUANTITY FIELD ===
+function initializeCategoryHandler() {
+    const categorySelect = document.getElementById('item-category');
+    const quantityGroup = document.getElementById('quantity-group');
+    const quantityInput = document.getElementById('item-quantity');
+    
+    if (!categorySelect || !quantityGroup) {
+        console.warn('Category select or quantity group not found');
+        return;
+    }
+    
+    categorySelect.addEventListener('change', (e) => {
+        const selectedCategory = e.target.value;
+        
+        if (selectedCategory === 'food') {
+            // Show quantity field for food items
+            quantityGroup.style.display = 'block';
+            quantityInput.setAttribute('required', 'true');
+            
+            // Add subtle animation
+            quantityGroup.style.opacity = '0';
+            quantityGroup.style.transform = 'translateY(-10px)';
+            setTimeout(() => {
+                quantityGroup.style.transition = 'all 0.3s ease';
+                quantityGroup.style.opacity = '1';
+                quantityGroup.style.transform = 'translateY(0)';
+            }, 10);
+        } else {
+            // Hide quantity field for non-food items
+            quantityGroup.style.display = 'none';
+            quantityInput.removeAttribute('required');
+            quantityInput.value = ''; // Clear the value
         }
     });
 }
@@ -545,12 +615,14 @@ function createSecureItemCard(doc, item) {
         itemEl.appendChild(soldBadge);
     }
     
-    // Create image element with enhanced security
+    // Create image element with enhanced security and optimization
     const itemImage = document.createElement('img');
     if (sanitizedItem.imageUrl) {
-        const thumbnailUrl = sanitizedItem.imageUrl.replace('/upload/', '/upload/w_400,h_300,c_fill,q_auto/');
-        itemImage.src = thumbnailUrl;
+        // Enhanced Cloudinary transformations for better performance
+        const optimizedUrl = sanitizedItem.imageUrl.replace('/upload/', '/upload/f_auto,q_auto,w_400,h_300,c_fill,dpr_auto/');
+        itemImage.src = optimizedUrl;
         itemImage.alt = sanitizedItem.name; // Using sanitized name
+        itemImage.loading = 'lazy'; // Enable lazy loading for better performance
     } else {
         // Fallback placeholder
         itemImage.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgdmlld0JveD0iMCAwIDQwMCAzMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSI0MDAiIGhlaWdodD0iMzAwIiBmaWxsPSIjRjNGNEY2Ii8+CjxwYXRoIGQ9Ik0yMDAgMTUwQzIwMCAxNzIuMDkxIDE4Mi4wOTEgMTkwIDE2MCAxOTBDMTM3LjkwOSAxOTAgMTIwIDE3Mi4wOTEgMTIwIDE1MEMxMjAgMTI3LjkwOSAxMzcuOTA5IDExMCAxNjAgMTEwQzE4Mi4wOTEgMTEwIDIwMCAxMjcuOTA5IDIwMCAxNTBaIiBmaWxsPSIjOUI5Q0ExIi8+Cjx0ZXh0IHg9IjIwMCIgeT0iMjIwIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmaWxsPSIjNkI3MjgwIiBmb250LXNpemU9IjE0cHgiPk5vIEltYWdlPC90ZXh0Pgo8L3N2Zz4K';
@@ -604,6 +676,7 @@ function createSecureItemCard(doc, item) {
         sellerImg.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iMjAiIGN5PSIyMCIgcj0iMjAiIGZpbGw9IiNGM0Y0RjYiLz4KPGNpcmNsZSBjeD0iMjAiIGN5PSIxNiIgcj0iNiIgZmlsbD0iIzlCOUNBMSIvPgo8cGF0aCBkPSJNMzIgMzJDMzIgMjYuNDc3MiAyNy41MjI4IDIyIDIyIDIySDE4QzEyLjQ3NzIgMjIgOCAyNi40NzcyIDggMzJIMzJaIiBmaWxsPSIjOUI5Q0ExIi8+Cjwvc3ZnPgo=';
     }
     sellerImg.alt = sanitizedItem.sellerName;
+    sellerImg.loading = 'lazy'; // Add lazy loading for profile images
     
     const sellerName = document.createElement('a');
     sellerName.href = `profile.html?uid=${sanitizedItem.sellerId || item.sellerId}`;
@@ -616,30 +689,108 @@ function createSecureItemCard(doc, item) {
     itemSeller.appendChild(sellerImg);
     itemSeller.appendChild(sellerName);
     
-    // Create action button with secure event listener
-    const actionButton = document.createElement('button');
+    // Create action button/interface with secure event listener
+    let actionContainer;
+    
     if (isAuthor && !isSold) {
-        actionButton.className = 'btn-mark-sold';
-        actionButton.textContent = 'Mark as Sold';
-        actionButton.addEventListener('click', () => {
+        // Author can mark as sold
+        actionContainer = document.createElement('button');
+        actionContainer.className = 'btn-mark-sold';
+        actionContainer.textContent = 'Mark as Sold';
+        actionContainer.addEventListener('click', () => {
             // Secure: No global function exposure, with input validation
             if (doc && doc.id) {
                 markItemAsSoldSecure(doc.id);
             }
         });
     } else if (!isSold) {
-        actionButton.className = 'btn-contact contact-seller-btn';
-        actionButton.textContent = 'Contact Seller';
-        actionButton.addEventListener('click', () => {
-            // Secure: No global function exposure, with input validation
-            if (doc && doc.id && item.sellerId) {
-                initiateChat(item.sellerId, doc.id, item.name, 'market');
-            }
-        });
+        // Non-author buyers - different interface for food vs other items
+        if (category === 'food' && item.quantity && item.quantity > 0) {
+            // Food items: Quantity selector + Request to Buy
+            actionContainer = document.createElement('div');
+            actionContainer.className = 'food-action-container';
+            
+            // Quantity info
+            const quantityInfo = document.createElement('div');
+            quantityInfo.className = 'quantity-info';
+            quantityInfo.textContent = `Available: ${item.quantity} units`;
+            
+            // Quantity selector
+            const quantitySelector = document.createElement('div');
+            quantitySelector.className = 'quantity-selector';
+            
+            const minusBtn = document.createElement('button');
+            minusBtn.className = 'quantity-btn minus-btn';
+            minusBtn.textContent = '-';
+            
+            const quantityValue = document.createElement('span');
+            quantityValue.className = 'quantity-value';
+            quantityValue.textContent = '1';
+            
+            const plusBtn = document.createElement('button');
+            plusBtn.className = 'quantity-btn plus-btn';
+            plusBtn.textContent = '+';
+            
+            // Quantity selector event listeners
+            let selectedQuantity = 1;
+            
+            minusBtn.addEventListener('click', () => {
+                if (selectedQuantity > 1) {
+                    selectedQuantity--;
+                    quantityValue.textContent = selectedQuantity;
+                }
+                minusBtn.disabled = selectedQuantity <= 1;
+            });
+            
+            plusBtn.addEventListener('click', () => {
+                if (selectedQuantity < item.quantity) {
+                    selectedQuantity++;
+                    quantityValue.textContent = selectedQuantity;
+                }
+                plusBtn.disabled = selectedQuantity >= item.quantity;
+            });
+            
+            // Initialize button states
+            minusBtn.disabled = true;
+            plusBtn.disabled = item.quantity <= 1;
+            
+            quantitySelector.appendChild(minusBtn);
+            quantitySelector.appendChild(quantityValue);
+            quantitySelector.appendChild(plusBtn);
+            
+            // Request to Buy button
+            const requestBuyBtn = document.createElement('button');
+            requestBuyBtn.className = 'request-buy-btn';
+            requestBuyBtn.textContent = 'Request to Buy';
+            requestBuyBtn.addEventListener('click', () => {
+                // Secure: No global function exposure, with input validation
+                if (doc && doc.id && item.sellerId) {
+                    const message = `Hi! I'd like to buy ${selectedQuantity} unit${selectedQuantity > 1 ? 's' : ''} of your "${sanitizedItem.name}".`;
+                    initiateChat(item.sellerId, doc.id, item.name, 'market', message);
+                }
+            });
+            
+            actionContainer.appendChild(quantityInfo);
+            actionContainer.appendChild(quantitySelector);
+            actionContainer.appendChild(requestBuyBtn);
+        } else {
+            // Non-food items or food items without quantity: Regular contact button
+            actionContainer = document.createElement('button');
+            actionContainer.className = 'btn-contact contact-seller-btn';
+            actionContainer.textContent = 'Contact Seller';
+            actionContainer.addEventListener('click', () => {
+                // Secure: No global function exposure, with input validation
+                if (doc && doc.id && item.sellerId) {
+                    initiateChat(item.sellerId, doc.id, item.name, 'market');
+                }
+            });
+        }
     } else {
-        actionButton.className = 'btn-sold';
-        actionButton.textContent = 'SOLD';
-        actionButton.disabled = true;
+        // Sold items
+        actionContainer = document.createElement('button');
+        actionContainer.className = 'btn-sold';
+        actionContainer.textContent = 'SOLD';
+        actionContainer.disabled = true;
     }
     
     // Assemble the elements
@@ -649,7 +800,7 @@ function createSecureItemCard(doc, item) {
     itemContent.appendChild(itemPrice);
     itemContent.appendChild(itemDesc);
     itemContent.appendChild(itemSeller);
-    itemContent.appendChild(actionButton);
+    itemContent.appendChild(actionContainer);
     itemEl.appendChild(itemContent);
     
     return itemEl;
@@ -918,11 +1069,12 @@ function initializePageAfterAuth() {
     
     // Initialize form submission handler
     initializeFormSubmission();
-    
+
+    // Initialize category change handler for quantity field
+    initializeCategoryHandler();
+
     // Initialize market data loading
-    initializeMarketDataLoading();
-    
-    // Add event listeners to filter buttons
+    initializeMarketDataLoading();    // Add event listeners to filter buttons
     document.querySelectorAll('.filter-btn').forEach(btn => {
         btn.addEventListener('click', () => {
             const category = btn.dataset.category;

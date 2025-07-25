@@ -12,14 +12,60 @@
     <!-- Favicon to prevent 404 -->
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='https://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>☕</text></svg>">
     
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
-    
-    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <!-- Critical CSS for above-the-fold content -->
+    <style>
+        /* Critical styles for immediate rendering */
+        :root {
+            --bg-color: #0B0E1A;
+            --primary-accent: #FFD93D;
+            --text-color: #F0F2F5;
+            --glass-bg: rgba(20, 25, 40, 0.75);
+            --glass-border: rgba(255, 255, 255, 0.15);
+            --font-family: 'Poppins', sans-serif;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: system-ui, -apple-system, sans-serif; /* Fallback font */
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.6;
+        }
+        /* Apply Poppins when loaded */
+        .fonts-loaded body {
+            font-family: var(--font-family);
+        }
+        .dashboard-container { min-height: 100vh; padding: 2rem; }
+        .main-header {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            margin-bottom: 2rem;
+            padding: 1rem 0;
+            border-radius: 16px;
+        }
+        .skeleton {
+            background: linear-gradient(90deg, rgba(255,255,255,0.1) 25%, rgba(255,255,255,0.2) 50%, rgba(255,255,255,0.1) 75%);
+            background-size: 200% 100%;
+            animation: skeletonPulse 1.5s infinite;
+        }
+        @keyframes skeletonPulse {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
+        }
+    </style>
     
     <!-- Link to external CSS file -->
     <link rel="stylesheet" href="dashboard-styles.css">
+    
+    <!-- Preconnect to Google Fonts for faster loading -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    
+    <!-- Preload critical resources -->
+    <link rel="preload" href="dashboard-styles.css" as="style">
+    <link rel="dns-prefetch" href="https://unpkg.com">
+    <link rel="dns-prefetch" href="https://firestore.googleapis.com">
+    <link rel="dns-prefetch" href="https://firebase.googleapis.com">
 </head>
 <body>
 
@@ -37,8 +83,9 @@
         <div class="decoration"></div>
         <div class="decoration"></div>
         
-        <main>
-            <header class="main-header">
+        <div class="dashboard-main-content">
+            <main>
+                <header class="main-header">
                 <div class="logo">
                     <i class="ph-fill ph-coffee"></i>
                     <h1>After Hours Hub</h1>
@@ -233,11 +280,53 @@
                 <p style="text-align: center; font-size: 0.8rem; color: var(--text-secondary); margin-top: 0.5rem;">Study Progress</p>
             </section>
         </aside>
+        </div> <!-- Close dashboard-main-content -->
+        
+        <!-- Footer Section -->
+        <footer class="dashboard-footer">
+            <div class="footer-content">
+                <div class="footer-info">
+                    <p>&copy; 2025 After Hours Hub - DSU Student Community</p>
+                    <p>Contact: mod.afterhourshub@dsu.edu </p>
+                </div>
+                <div class="footer-social">
+                    <a href="https://instagram.com/afterhourshub" id="insta-icon" target="_blank" aria-label="Follow us on Instagram">
+                        <i class="ph-bold ph-instagram-logo"></i>
+                    </a>
+                    <a href="https://discord.gg/afterhourshub" id="discord-icon" target="_blank" aria-label="Join our Discord">
+                        <i class="ph-bold ph-discord-logo"></i>
+                    </a>
+                    <a href="mailto:mod.afterhourshub@gmail.com" id="email-icon" target="_blank" aria-label="Send us an email">
+                        <i class="ph-bold ph-envelope"></i>
+                    </a>
+                </div>
+            </div>
+        </footer>
     </div>
 
+    <!-- Deferred non-critical resources for better performance -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+    <noscript><link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet"></noscript>
+    <script src="https://unpkg.com/@phosphor-icons/web" defer></script>
+    
+    <!-- Font loading optimization -->
+    <script>
+        // Detect when Poppins font has loaded
+        if ('fonts' in document) {
+            document.fonts.ready.then(function() {
+                document.body.classList.add('fonts-loaded');
+            });
+        } else {
+            // Fallback for older browsers
+            setTimeout(function() {
+                document.body.classList.add('fonts-loaded');
+            }, 1000);
+        }
+    </script>
+    
     <!-- Link to external JavaScript file -->
-    <script type="module" src="dashboard-scripts.js"></script>
     <script type="module" src="firebase-auth.js"></script>
-    <script type="module" src="notification-system.js"></script>
+    <script type="module" src="dashboard-scripts.js" defer></script>
+    <script type="module" src="notification-system.js" defer></script>
 </body>
 </html>

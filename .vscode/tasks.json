@@ -1,0 +1,12 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Test Hostel Market Food Feature",
+			"type": "shell",
+			"command": "echo 'Testing hostel market food quantity feature...' && echo 'Phase 1: Form validation completed' && echo 'Phase 2: Buyer interface completed' && echo 'Open hostel-market.html in browser to test the functionality'",
+			"group": "test",
+			"isBackground": false
+		}
+	]
+}

@@ -180,16 +180,23 @@ body::before {
 /* ===== MAIN LAYOUT ===== */
 .dashboard-container {
     display: flex;
+    flex-direction: column;
     min-height: 100vh;
     padding: 2rem;
     gap: 2rem;
 }
 
-main {
+.dashboard-main-content {
+    display: flex;
+    gap: 2rem;
+    flex: 1;
+}
+
+.dashboard-main-content main {
     flex: 3; /* Takes ~75% of the space */
 }
 
-aside {
+.dashboard-main-content aside {
     flex: 1; /* Takes ~25% of the space */
     display: flex;
     flex-direction: column;
@@ -1221,18 +1228,19 @@ aside {
 
 /* ===== RESPONSIVE DESIGN ===== */
 @media (max-width: 1024px) {
-    .dashboard-container {
+    .dashboard-main-content {
         flex-direction: column;
         gap: 1.5rem; /* Add space between stacked sections */
     }
     
-    main, aside {
+    .dashboard-main-content main, 
+    .dashboard-main-content aside {
         flex: none;
         width: 100%;
     }
     
     /* Make sidebar stack naturally below main content instead of being fixed */
-    aside {
+    .dashboard-main-content aside {
         position: relative;
         display: flex;
         flex-direction: column;
@@ -1852,5 +1860,112 @@ aside {
     .contact-item {
         padding: 0.5rem;
         gap: 0.5rem;
+    }
+}
+
+/* ===== FOOTER STYLES ===== */
+.dashboard-footer {
+    width: 100%;
+    margin-top: 2rem;
+    background: var(--glass-bg);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--border-radius);
+    padding: 1.5rem;
+    box-shadow: 0 8px 32px var(--shadow-color);
+}
+
+.footer-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    max-width: 100%;
+}
+
+.footer-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+}
+
+.footer-info p {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    margin: 0;
+}
+
+.footer-info p:first-child {
+    color: var(--text-color);
+    font-weight: 500;
+}
+
+.footer-social {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+}
+
+.footer-social a {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--text-color);
+    text-decoration: none;
+    transition: all var(--animation-speed) ease;
+    border: 1px solid var(--glass-border);
+}
+
+.footer-social a:hover {
+    transform: scale(1.1);
+    box-shadow: 0 4px 16px rgba(255, 255, 255, 0.2);
+}
+
+.footer-social a i {
+    font-size: 1.2rem;
+}
+
+/* Social Media Brand Colors */
+#insta-icon:hover {
+    background: linear-gradient(45deg, #f09433 0%,#e6683c 25%,#dc2743 50%,#cc2366 75%,#bc1888 100%);
+    color: white;
+    border-color: transparent;
+}
+
+#discord-icon:hover {
+    background-color: #5865F2;
+    color: white;
+    border-color: transparent;
+}
+
+#email-icon:hover {
+    background-color: var(--primary-accent);
+    color: var(--bg-color);
+    border-color: transparent;
+}
+
+/* Footer Responsive Design */
+@media (max-width: 768px) {
+    .footer-content {
+        flex-direction: column;
+        gap: 1rem;
+        text-align: center;
+    }
+    
+    .footer-info {
+        order: 2;
+    }
+    
+    .footer-social {
+        order: 1;
+        justify-content: center;
+    }
+    
+    .footer-info p {
+        font-size: 0.8rem;
     }
 }

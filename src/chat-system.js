@@ -40,7 +40,7 @@ let chatModal = null;
  * @param {string} itemTitle - Title of the item for reference
  * @param {string} itemType - Type of item ('market' or 'assignment')
  */
-export async function initiateChat(itemOwnerUid, itemId, itemTitle, itemType = 'market') {
+export async function initiateChat(itemOwnerUid, itemId, itemTitle, itemType = 'market', customMessage = null) {
     try {
         const currentUserUid = auth.currentUser?.uid;
         
@@ -74,6 +74,13 @@ export async function initiateChat(itemOwnerUid, itemId, itemTitle, itemType = '
         if (chatSnap.exists()) {
             // Chat already exists, just open it
             openChatModal(chatRefId, chatSnap.data());
+            
+            // Send custom message if provided
+            if (customMessage && customMessage.trim()) {
+                setTimeout(() => {
+                    sendCustomMessage(chatRefId, customMessage.trim());
+                }, 500);
+            }
         } else {
             // Get current user info
             const currentUser = auth.currentUser;
@@ -125,10 +132,39 @@ export async function initiateChat(itemOwnerUid, itemId, itemTitle, itemType = '
             
             // Open the newly created chat
             openChatModal(chatRefId, chatData);
+            
+            // Send custom message if provided
+            if (customMessage && customMessage.trim()) {
+                // Wait a brief moment for the modal to open and initialize
+                setTimeout(() => {
+                    sendCustomMessage(chatRefId, customMessage.trim());
+                }, 500);
+            }
         }
     } catch (error) {
         console.error('Error initiating chat:', error);
         handleError(error, 'Failed to start chat. Please try again.');
+    }
+}
+
+/**
+ * Send a custom message to a chat
+ * @param {string} chatId - The chat document ID
+ * @param {string} message - The message text to send
+ */
+async function sendCustomMessage(chatId, message) {
+    try {
+        const messageInput = document.getElementById('message-input');
+        if (messageInput) {
+            messageInput.value = message;
+            // Trigger the send button click
+            const sendButton = document.getElementById('send-button');
+            if (sendButton) {
+                sendButton.click();
+            }
+        }
+    } catch (error) {
+        console.error('Error sending custom message:', error);
     }
 }
 
